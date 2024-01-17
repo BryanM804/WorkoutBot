@@ -15,6 +15,8 @@ const commands = [
                 description: "Type of movement.",
                 type: ApplicationCommandOptionType.String,
                 required: true,
+                autocomplete: true
+                /*
                 choices: [
                     {
                         name: "Barbell Bench Press",
@@ -148,7 +150,7 @@ const commands = [
                         name: "Bicep Curl Machine",
                         value: "MachineCurl"
                     }
-                ]
+                ]*/
             },
             {
                 name: "weight",

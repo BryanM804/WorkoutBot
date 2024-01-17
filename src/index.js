@@ -1,4 +1,4 @@
-const {Client, IntentsBitField} = require('discord.js');
+const {Client, IntentsBitField, AutocompleteInteraction, CommandInteractionOptionResolver} = require('discord.js');
 require("dotenv").config();
 const client = new Client({
     intents: [
@@ -15,10 +15,22 @@ client.on("ready", (c) => {
 
 //Interaction is the event triggered when someone uses a command
 client.on("interactionCreate", (interaction) =>{
+    
+    if(interaction.isAutocomplete()){
+        console.log("Autocomplete interaction");
+        (async () =>{
+            interaction = AutocompleteInteraction(interaction);
+            const focused = interaction.options.getFocused().value;
+            const choices = ["Barbell Bench", "Dumbbell Bench"];
+            const filtered = choices.filter(choice => choice.startsWith(focused));
+            await interaction.respond(
+                filtered.map(choice => ({name: choice, value: choice})),
+            );
+        })
+    }
+
     if(!interaction.isChatInputCommand()) return;
-    
-    console.log(interaction);
-    
+
     if(interaction.commandName === "help"){
 
     }
