@@ -23,7 +23,15 @@ class Account{
         this.creationDate = creationDate || new Date().toDateString();
         this.skipTotal = skipTotal || 0;
         this.skipStreak = skipStreak || 0;
-        this.history = history || []; //To be filled with WorkoutDay objects
+        //If the user has a history it converts the history it has read into WorkoutDay objects
+        if(history.length > 0){
+            this.history = []
+            for(let i = 0; i < history.length; i++){
+                this.history.push(new WorkoutDay(history[i].date, history[i].sets));
+            }
+        }else{
+            this.history = [];
+        }
         this.file = `accounts\\${name}.json`;
         this.writeInfo();
     }
@@ -40,10 +48,12 @@ class Account{
     }
     //Overriding history and only saving one set for some reason
     logSet(movement, weight, reps){
-        if(this.history.length >= 1 && this.history[this.history.length - 1].getDate() === (new Date().toDateString())){
+        var today = new Date().toDateString();
+        if(this.history.length >= 1 && this.history[this.history.length - 1].getDate() === today){
             this.history[this.history.length - 1].addSet(movement, weight, reps);
         }else{
             this.history.push(new WorkoutDay(new Date().toDateString()));
+            console.log("created new day");
             this.logSet(movement, weight, reps);
         }
         this.writeInfo();

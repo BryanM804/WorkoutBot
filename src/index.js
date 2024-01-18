@@ -31,17 +31,17 @@ fs.readdir("accounts", (err, files) => {
 
 function findAccount(name, id){
     for(let i = 0; i < accounts.length; i++){
-        if(accounts[i].userID === id){
+        if(accounts[i].id === id){
             return accounts[i];
         }
     }
     accounts.push(new Account(name, id));
+    console.log(`Created new account for ${name}`);
     return accounts[accounts.length - 1];
 }
 
 client.on("ready", (c) => {
     console.log(`${c.user.tag} is ready for gains.`);
-    console.log(accounts);
 });
 
 //Ideally in the future this will be handled with a command handler
@@ -93,6 +93,8 @@ client.on("interactionCreate", (interaction) =>{
             tempAccount = findAccount(interaction.user.username, interaction.user.id)
             tempAccount.logSet(movement, weight, reps);
         }
+
+        //Reply in chat (will likely change to an embed later)
         if(sets > 1){
             interaction.reply(`Logged ${sets} sets of ${movement} ${weight}lbs for ${reps} reps.`)
         }else{
