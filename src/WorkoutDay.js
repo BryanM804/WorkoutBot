@@ -1,9 +1,9 @@
 const Set = require(".\\Set.js");
 class WorkoutDay{
-    constructor(date, sets, dayTotal){
+    constructor(date, sets){
         this.date = date;
         //If this is an existing day it converts the stored sets into Set objects
-        if(sets > 0){
+        if(sets != null && sets.length > 0){
             this.sets = [];
             for(let i = 0; i < sets.length; i++){
                 this.sets.push(new Set(sets[i].movement, sets[i].weight, sets[i].reps))
@@ -11,7 +11,8 @@ class WorkoutDay{
         }else{
             this.sets = [];
         }
-        this.dayTotal = dayTotal || 0;
+        this.dayTotal = 0;
+        this.getTotal()
     }
 
     getDate(){
@@ -30,6 +31,14 @@ class WorkoutDay{
     addSet(movement, weight, reps){
         this.sets.push(new Set(movement, weight, reps));
         this.getTotal();
+    }
+
+    toString(){
+        var setsString = "";
+        for(let i = 0; i < this.sets.length; i++){
+            setsString += this.sets[i].toString()+"\n";
+        }
+        return (`${this.date}\n${setsString}Total Weight: ${this.dayTotal}`);
     }
 }
 

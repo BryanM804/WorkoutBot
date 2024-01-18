@@ -5,6 +5,10 @@ class Set{
         this.reps = reps;
         this.setTotal = weight * reps;
     }
+
+    toString(){
+        return (`${this.movement}: ${this.weight}lbs ${this.reps} reps`)
+    }
 }
 
 module.exports = Set

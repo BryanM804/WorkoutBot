@@ -11,6 +11,9 @@
 //[movement]
 //[weight] * [reps] = [set total]
 //[daily total]
+
+//Things to fix:
+//If the program crashes the account file gets deleted.
 const fs = require("fs");
 const WorkoutDay = require(".\\WorkoutDay.js");
 
@@ -24,7 +27,7 @@ class Account{
         this.skipTotal = skipTotal || 0;
         this.skipStreak = skipStreak || 0;
         //If the user has a history it converts the history it has read into WorkoutDay objects
-        if(history.length > 0){
+        if(history != null && history.length > 0){
             this.history = []
             for(let i = 0; i < history.length; i++){
                 this.history.push(new WorkoutDay(history[i].date, history[i].sets));
@@ -41,6 +44,20 @@ class Account{
     }
     getId(){
         return this.id;
+    }
+    getHistory(days){
+        if(this.history.length < 1){
+            return ("No history.");
+        }
+        var returnString = "";
+        var printDays = days;
+        if(this.history.length < days){
+            printDays = this.history.length;
+        }
+        for(let i = 1; i <= printDays; i++){
+            returnString += this.history[this.history.length - i].toString();
+        }
+        return returnString;
     }
 
     writeInfo(){

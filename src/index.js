@@ -79,10 +79,12 @@ client.on("interactionCreate", (interaction) =>{
 
     if(!interaction.isChatInputCommand()) return;
 
+    //Help command handling
     if(interaction.commandName === "help"){
         console.log(interaction);
     }
     
+    //Log command handling
     if(interaction.commandName === "log"){
         var movement = interaction.options.get("movement").value;
         var weight = interaction.options.get("weight")?.value ?? 0;
@@ -100,6 +102,13 @@ client.on("interactionCreate", (interaction) =>{
         }else{
             interaction.reply(`Logged ${movement} ${weight}lbs for ${reps} reps.`)
         }
+    }
+
+    //History command handling
+    if(interaction.commandName === "history"){
+        const days = interaction.options.get("days")?.value ?? 3;
+        const user = findAccount(interaction.user.username, interaction.user.id);
+        interaction.reply(user.getHistory(days));
     }
 })
 

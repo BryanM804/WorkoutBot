@@ -50,6 +50,17 @@ const commands = [
                 type: ApplicationCommandOptionType.String
             }
         ]
+    },
+    {
+        name: "history",
+        description: "Get your history log up to 30 days",
+        options: [
+            {
+                name: "days",
+                description: "Amount of days back you want to go.",
+                type: ApplicationCommandOptionType.Integer
+            }
+        ]
     }
 
 ];
