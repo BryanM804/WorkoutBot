@@ -61,6 +61,10 @@ const commands = [
                 type: ApplicationCommandOptionType.Integer
             }
         ]
+    },
+    {
+        name: "profile",
+        description: "See your profile information"
     }
 
 ];

@@ -45,6 +45,9 @@ class Account{
     getId(){
         return this.id;
     }
+    getLevel(){
+        return this.level;
+    }
     getHistory(days){
         if(this.history.length < 1){
             return ("No history.");
@@ -73,11 +76,17 @@ class Account{
             console.log("created new day");
             this.logSet(movement, weight, reps);
         }
+        this.xp += 100 + weight * reps;
+        while(this.xp >= this.level * 1500){
+            this.xp -= (this.level * 1500);
+            this.level++;
+            console.log(`${this.name} levelled up to ${this.level}`);
+        }
         this.writeInfo();
     }
 
     toString(){
-        return `${this.name}: ${this.id}`;
+        return `${this.name}\nCreated: ${this.creationDate}\nLevel: ${this.level}\nXP: ${this.xp}/${this.level * 1500}\nDays Skipped: ${this.skipTotal}`;
     }
 }
 

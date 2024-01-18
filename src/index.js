@@ -12,11 +12,20 @@ const client = new Client({
         ],
 });
 
-//Creating account objects for each user file when the bot starts
+//Ensuring there is a backup directory to backup accounts.
+fs.readdir("backup", (err, files) => {
+    if(err){
+        console.log(`ERROR: ${err}\nMaking new backup directory.`)
+        fs.mkdir("backup", (error) => {console.error(error)})
+    }
+});
+
+//Creating account objects for each user file when the bot starts and backing them up in case
+//the program crashes
 let accounts = []
 fs.readdir("accounts", (err, files) => {
     if(err){
-        console.log(`ERROR: ${err}\nMaking new dir.`)
+        console.log(`ERROR: ${err}\nMaking new accounts directory.`)
         fs.mkdir("accounts", (error) => {console.error(error)})
     }
     for(let i = 0; i < files.length; i++){
@@ -91,11 +100,14 @@ client.on("interactionCreate", (interaction) =>{
         var reps = interaction.options.get("reps")?.value ?? 0;
         var sets = interaction.options.get("sets")?.value ?? 1;
         console.log(`${interaction.user.username} Logged: ${movement} ${weight} lbs, ${reps} reps, and ${sets} sets.`)
+        var tempAccount = findAccount(interaction.user.username, interaction.user.id)
+        var prevLvl = tempAccount.getLevel();
         for(let i = 0; i < sets; i++){
-            tempAccount = findAccount(interaction.user.username, interaction.user.id)
             tempAccount.logSet(movement, weight, reps);
         }
-
+        if(tempAccount.getLevel() > prevLvl){
+            interaction.channel.send(`@${interaction.user.tag} has levelled up to level ${tempAccount.getLevel()}!`)
+        }
         //Reply in chat (will likely change to an embed later)
         if(sets > 1){
             interaction.reply(`Logged ${sets} sets of ${movement} ${weight}lbs for ${reps} reps.`)
@@ -109,6 +121,11 @@ client.on("interactionCreate", (interaction) =>{
         const days = interaction.options.get("days")?.value ?? 3;
         const user = findAccount(interaction.user.username, interaction.user.id);
         interaction.reply(user.getHistory(days));
+    }
+
+    //Profile command handling
+    if(interaction.commandName === "profile"){
+        interaction.reply(findAccount(interaction.user.username, interaction.user.id).toString());
     }
 })
 
