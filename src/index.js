@@ -1,5 +1,8 @@
+const Account = require("C:\\Users\\slopy\\Desktop\\WorkoutBot\\WorkoutBot\\src\\Account.js");
 const {Client, IntentsBitField, AutocompleteInteraction, CommandInteractionOptionResolver} = require('discord.js');
+const fs = require("fs");
 require("dotenv").config();
+
 const client = new Client({
     intents: [
         IntentsBitField.Flags.Guilds, 
@@ -9,13 +12,36 @@ const client = new Client({
         ],
 });
 
+function openAccounts(guildID){
+    fs.readdir(`servers\\${guildID}`, (err, files) => {
+        if(err){
+            console.log(`ERROR: ${err}\nMaking new dir.`)
+            fs.mkdir(`servers\\${guildID}`, (error) => {console.error(error)})
+        }
+        let accounts = [];
+        for(let i = 0; i < files.length; i++){
+            let buf = new Buffer();
+            buf.alloc(256);
+            fs.open(files[i], "r", (err, fd) => {
+                if(err) 
+                    console.error(err)
+                else
+                    fs.read(fd, buf, 0, buf.length, 0, (err, bytes) => {
+                        const name = buf.toString().substring(0, buf.toString.indexOf("\n"));
+                        console.log(name);
+                    })
+            })
+        }
+    })
+}
+
 client.on("ready", (c) => {
     console.log(`${c.user.tag} is ready for gains.`);
 });
 
 //Interaction is the event triggered when someone uses a command
 client.on("interactionCreate", (interaction) =>{
-    
+    openAccounts(interaction.guildId)
     if(interaction.isAutocomplete() && interaction.commandName === "log"){
         const focused = interaction.options.getFocused();
         const choices = [
@@ -50,7 +76,19 @@ client.on("interactionCreate", (interaction) =>{
     if(!interaction.isChatInputCommand()) return;
 
     if(interaction.commandName === "help"){
-
+        console.log(interaction);
+    }
+    
+    if(interaction.commandName === "log"){
+        /*let account;
+        for(let i = 0; i < accounts.length; i++){
+            if(accounts[i].getID() === interaction.user.id){
+                account = accounts[i];
+            }
+        }
+        if(account == null){
+            account = new Account(interaction.guildId, interaction.user.username, interaction.user.id);
+        }*/
     }
 })
 
