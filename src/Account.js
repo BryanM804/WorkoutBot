@@ -1,10 +1,10 @@
 const fs = require("fs");
 
 class Account{
-    constructor(guildID, name, id){
+    constructor(name, id){
         this.name = name;
         this.id = id;
-        this.file = `servers\\${guildID}\\${name}.txt`;
+        this.file = `accounts\\${name}.txt`;
         this.readInfo(this.file);
     }
 

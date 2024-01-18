@@ -12,28 +12,17 @@ const client = new Client({
         ],
 });
 
-function openAccounts(guildID){
-    fs.readdir(`servers\\${guildID}`, (err, files) => {
-        if(err){
-            console.log(`ERROR: ${err}\nMaking new dir.`)
-            fs.mkdir(`servers\\${guildID}`, (error) => {console.error(error)})
-        }
-        let accounts = [];
-        for(let i = 0; i < files.length; i++){
-            let buf = new Buffer();
-            buf.alloc(256);
-            fs.open(files[i], "r", (err, fd) => {
-                if(err) 
-                    console.error(err)
-                else
-                    fs.read(fd, buf, 0, buf.length, 0, (err, bytes) => {
-                        const name = buf.toString().substring(0, buf.toString.indexOf("\n"));
-                        console.log(name);
-                    })
-            })
-        }
-    })
-}
+//Creating account objects for each user file when the bot starts
+let accounts = []
+fs.readdir("accounts", (err, files) => {
+    if(err){
+        console.log(`ERROR: ${err}\nMaking new dir.`)
+        fs.mkdir("accounts", (error) => {console.error(error)})
+    }
+    for(let i = 0; i < files.length; i++){
+
+    }
+})
 
 client.on("ready", (c) => {
     console.log(`${c.user.tag} is ready for gains.`);
