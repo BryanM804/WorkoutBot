@@ -6,10 +6,15 @@ class WorkoutDay{
         this.dayTotal = 0;
     }
 
+    getDate(){
+        return this.date;
+    }
     getTotal(){
+        if(this.sets.length < 1)
+            return;
         this.dayTotal = 0;
         for(let i = 0; i < this.sets.length; i++){
-            this.dayTotal += sets[i].setTotal;
+            this.dayTotal += this.sets[i].setTotal;
         }
         return this.dayTotal;
     }

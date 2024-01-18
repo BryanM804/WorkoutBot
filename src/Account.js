@@ -15,15 +15,15 @@ const fs = require("fs");
 const WorkoutDay = require(".\\WorkoutDay.js");
 
 class Account{
-    constructor(name, id){
+    constructor(name, id, level, xp, creationDate, skipTotal, skipStreak, history){
         this.name = name;
         this.id = id;
-        this.level = 1;
-        this.xp = 0;
-        this.creationDate = new Date().toDateString();
-        this.skipTotal = 0;
-        this.skipStreak = 0;
-        this.history = []; //To be filled with WorkoutDay objects
+        this.level = level || 1;
+        this.xp = xp || 0;
+        this.creationDate = creationDate || new Date().toDateString();
+        this.skipTotal = skipTotal || 0;
+        this.skipStreak = skipStreak || 0;
+        this.history = history || []; //To be filled with WorkoutDay objects
         this.file = `accounts\\${name}.json`;
         this.writeInfo();
     }
@@ -38,13 +38,13 @@ class Account{
     writeInfo(){
         fs.writeFile(this.file, JSON.stringify(this), (err) => {if(err) console.error(err)});
     }
-
-    log(movement, weight, reps){
-        if(this.history[this.history.length - 1].date === new Date().toDateString()){
+    //Overriding history and only saving one set for some reason
+    logSet(movement, weight, reps){
+        if(this.history.length >= 1 && this.history[this.history.length - 1].getDate() === (new Date().toDateString())){
             this.history[this.history.length - 1].addSet(movement, weight, reps);
         }else{
             this.history.push(new WorkoutDay(new Date().toDateString()));
-            this.log(movement, weight, reps);
+            this.logSet(movement, weight, reps);
         }
         this.writeInfo();
     }

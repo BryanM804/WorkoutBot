@@ -20,7 +20,12 @@ fs.readdir("accounts", (err, files) => {
         fs.mkdir("accounts", (error) => {console.error(error)})
     }
     for(let i = 0; i < files.length; i++){
-        accounts.push(require(`..\\accounts\\${files[i]}`));
+        fs.readFile(`accounts\\${files[i]}`, "utf-8", (err, data) => {
+            if(err)
+                console.error(err);
+            //When I figure out a more efficient way to convert from JSON to an Account object it will go here
+            accounts.push(new Account(JSON.parse(data).name, JSON.parse(data).id, JSON.parse(data).level, JSON.parse(data).xp, JSON.parse(data).creationDate, JSON.parse(data).skipTotal, JSON.parse(data).skipStreak, JSON.parse(data).history))
+        })
     }
 })
 
@@ -36,6 +41,7 @@ function findAccount(name, id){
 
 client.on("ready", (c) => {
     console.log(`${c.user.tag} is ready for gains.`);
+    console.log(accounts);
 });
 
 //Ideally in the future this will be handled with a command handler
@@ -78,7 +84,20 @@ client.on("interactionCreate", (interaction) =>{
     }
     
     if(interaction.commandName === "log"){
-        findAccount(interaction.user.username, interaction.user.userID);
+        var movement = interaction.options.get("movement").value;
+        var weight = interaction.options.get("weight")?.value ?? 0;
+        var reps = interaction.options.get("reps")?.value ?? 0;
+        var sets = interaction.options.get("sets")?.value ?? 1;
+        console.log(`${interaction.user.username} Logged: ${movement} ${weight} lbs, ${reps} reps, and ${sets} sets.`)
+        for(let i = 0; i < sets; i++){
+            tempAccount = findAccount(interaction.user.username, interaction.user.id)
+            tempAccount.logSet(movement, weight, reps);
+        }
+        if(sets > 1){
+            interaction.reply(`Logged ${sets} sets of ${movement} ${weight}lbs for ${reps} reps.`)
+        }else{
+            interaction.reply(`Logged ${movement} ${weight}lbs for ${reps} reps.`)
+        }
     }
 })
 
