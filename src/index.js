@@ -1,4 +1,4 @@
-const Account = require("C:\\Users\\slopy\\Desktop\\WorkoutBot\\WorkoutBot\\src\\Account.js");
+const Account = require(".\\Account.js");
 const {Client, IntentsBitField, AutocompleteInteraction, CommandInteractionOptionResolver} = require('discord.js');
 const fs = require("fs");
 require("dotenv").config();
@@ -20,17 +20,26 @@ fs.readdir("accounts", (err, files) => {
         fs.mkdir("accounts", (error) => {console.error(error)})
     }
     for(let i = 0; i < files.length; i++){
-
+        accounts.push(require(`..\\accounts\\${files[i]}`));
     }
 })
+
+function findAccount(name, id){
+    for(let i = 0; i < accounts.length; i++){
+        if(accounts[i].userID === id){
+            return accounts[i];
+        }
+    }
+    accounts.push(new Account(name, id));
+    return accounts[accounts.length - 1];
+}
 
 client.on("ready", (c) => {
     console.log(`${c.user.tag} is ready for gains.`);
 });
 
-//Interaction is the event triggered when someone uses a command
+//Ideally in the future this will be handled with a command handler
 client.on("interactionCreate", (interaction) =>{
-    openAccounts(interaction.guildId)
     if(interaction.isAutocomplete() && interaction.commandName === "log"){
         const focused = interaction.options.getFocused();
         const choices = [
@@ -69,15 +78,7 @@ client.on("interactionCreate", (interaction) =>{
     }
     
     if(interaction.commandName === "log"){
-        /*let account;
-        for(let i = 0; i < accounts.length; i++){
-            if(accounts[i].getID() === interaction.user.id){
-                account = accounts[i];
-            }
-        }
-        if(account == null){
-            account = new Account(interaction.guildId, interaction.user.username, interaction.user.id);
-        }*/
+        findAccount(interaction.user.username, interaction.user.userID);
     }
 })
 

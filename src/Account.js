@@ -1,11 +1,31 @@
+//File Format:
+//[name]
+//[id]
+//[level]
+//[xp]
+//[date created]
+//[skip total]
+//[skip streak]
+//History: (each consecutive day gets added to the bottom)
+//[day]
+//[movement]
+//[weight] * [reps] = [set total]
+//[daily total]
 const fs = require("fs");
+const WorkoutDay = require(".\\WorkoutDay.js");
 
 class Account{
     constructor(name, id){
         this.name = name;
         this.id = id;
-        this.file = `accounts\\${name}.txt`;
-        this.readInfo(this.file);
+        this.level = 1;
+        this.xp = 0;
+        this.creationDate = new Date().toDateString();
+        this.skipTotal = 0;
+        this.skipStreak = 0;
+        this.history = []; //To be filled with WorkoutDay objects
+        this.file = `accounts\\${name}.json`;
+        this.writeInfo();
     }
 
     getName(){
@@ -15,28 +35,12 @@ class Account{
         return this.id;
     }
 
-    //File Format:
-    //[name]
-    //[id]
-    //[level]
-    //[xp]
-    //[date created]
-    //[skip total]
-    //[skip streak]
-    //History: (each consecutive day gets added to the bottom)
-    //[day]
-    //[movement]
-    //[weight] * [reps] = [set total]
-    //[daily total]
+    writeInfo(){
+        fs.writeFile(this.file, JSON.stringify(this), (err) => {if(err) console.error(err)});
+    }
 
-    readInfo(input){
-        const date = new Date();
-        fs.access(input, (error) => {
-            if(error){
-                console.error(error);
-                fs.writeFile(input, `${this.name}\n${this.id}\n1\n0\n${date.toDateString()}\n0\n0\n`, (err) => {console.log(`ERROR: ${err}`)})
-            }
-        })
+    toString(){
+        return `${this.name}: ${this.id}`;
     }
 }
 
