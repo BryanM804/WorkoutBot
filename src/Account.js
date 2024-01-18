@@ -39,6 +39,16 @@ class Account{
         fs.writeFile(this.file, JSON.stringify(this), (err) => {if(err) console.error(err)});
     }
 
+    log(movement, weight, reps){
+        if(this.history[this.history.length - 1].date === new Date().toDateString()){
+            this.history[this.history.length - 1].addSet(movement, weight, reps);
+        }else{
+            this.history.push(new WorkoutDay(new Date().toDateString()));
+            this.log(movement, weight, reps);
+        }
+        this.writeInfo();
+    }
+
     toString(){
         return `${this.name}: ${this.id}`;
     }

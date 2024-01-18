@@ -3,15 +3,20 @@ class WorkoutDay{
     constructor(date){
         this.date = date;
         this.sets = [];
-        this.total = 0;
+        this.dayTotal = 0;
     }
 
     getTotal(){
-        this.total = 0;
+        this.dayTotal = 0;
         for(let i = 0; i < this.sets.length; i++){
-            this.total += sets[i].total;
+            this.dayTotal += sets[i].setTotal;
         }
-        return this.total;
+        return this.dayTotal;
+    }
+
+    addSet(movement, weight, reps){
+        this.sets.push(new Set(movement, weight, reps));
+        this.getTotal();
     }
 }
 

@@ -3,7 +3,7 @@ class Set{
         this.movement = movement;
         this.weight = weight;
         this.reps = reps;
-        this.total = weight * reps;
+        this.setTotal = weight * reps;
     }
 }
 
