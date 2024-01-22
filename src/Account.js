@@ -76,7 +76,13 @@ class Account{
             console.log("created new day");
             this.logSet(movement, weight, reps);
         }
-        this.xp += 100 + weight * reps;
+
+        //Dumbbell exercises count for double the weight internally
+        if(movement.startsWith("Dumbbell")){
+            this.xp += 100 + (2 * weight * reps);
+        }else{
+            this.xp += 100 + weight * reps;
+        }
         while(this.xp >= this.level * 1500){
             this.xp -= (this.level * 1500);
             this.level++;

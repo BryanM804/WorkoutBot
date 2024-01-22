@@ -3,7 +3,12 @@ class Set{
         this.movement = movement;
         this.weight = weight;
         this.reps = reps;
-        this.setTotal = weight * reps;
+        //Dumbbell exercises count for double the weight internally
+        if(movement.startsWith("Dumbbell")){
+            this.setTotal = 2 * weight * reps;
+        }else{
+            this.setTotal = weight * reps;
+        }
     }
 
     toString(){

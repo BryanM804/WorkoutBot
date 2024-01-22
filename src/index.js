@@ -33,8 +33,28 @@ fs.readdir("accounts", (err, files) => {
             if(err)
                 console.error(err);
             //When I figure out a more efficient way to convert from JSON to an Account object it will go here
-            accounts.push(new Account(JSON.parse(data).name, JSON.parse(data).id, JSON.parse(data).level, JSON.parse(data).xp, JSON.parse(data).creationDate, JSON.parse(data).skipTotal, JSON.parse(data).skipStreak, JSON.parse(data).history))
+            //If the program crahses the account file will be empty, this checks for that and restores the backups
+            try{
+                accounts.push(new Account(JSON.parse(data).name, JSON.parse(data).id, JSON.parse(data).level, JSON.parse(data).xp, JSON.parse(data).creationDate, JSON.parse(data).skipTotal, JSON.parse(data).skipStreak, JSON.parse(data).history))
+            }catch(error){
+                console.error(error)
+                console.log(`File was corrupted, attempting to restore backup.`)
+                fs.readFile(`backup\\${files[i]}`, "utf-8", (err2, backupData) =>{
+                    if(err2){
+                        console.error(err2);
+                        process.exit();
+                    }
+                    try{
+                        accounts.push(new Account(JSON.parse(backupData).name, JSON.parse(backupData).id, JSON.parse(backupData).level, JSON.parse(backupData).xp, JSON.parse(backupData).creationDate, JSON.parse(backupData).skipTotal, JSON.parse(backupData).skipStreak, JSON.parse(backupData).history))
+                    }catch(error2){
+                        console.log(`ERROR: Backup was unreadable.`);
+                        console.error(error2);
+                        process.exit();
+                    }
+                });
+            }
         })
+        //fs.copyFile(`accounts\\${files[i]}`, `backup\\${files[i]}`, (err) => {if(err) console.error(err)});
     }
 })
 
@@ -50,6 +70,16 @@ function findAccount(name, id){
 }
 
 client.on("ready", (c) => {
+    for(let i = 0; i < accounts.length; i++){
+        fs.readdir("accounts", (err, files) => {
+            if(err)
+                console.error(err);
+            //Because the file functions are running async the backup has to be done once the bot is ready since
+            //it ensures the accounts are all loaded in and it won't just make an empty backup.
+            //I may change this later.
+            fs.copyFile(`accounts\\${files[i]}`, `backup\\${files[i]}`, (cpyErr) => {if(cpyErr) console.error(cpyErr)});
+        });
+    }
     console.log(`${c.user.tag} is ready for gains.`);
 });
 
@@ -63,7 +93,7 @@ client.on("interactionCreate", (interaction) =>{
             "Decline Barbell Bench Press", "Decline Dumbbell Bench Press", "Decline Chest Press Machine",
             "Dip", "Assissted Dip", "Barbell Shoulder Press/Military Press",
             "Dumbbell Shoulder Press", "Arnold Press", "Machine Shoulder Press",
-            "Lateral Raise", "Cable Lateral Raise", "Machine Lateral Raise",
+            "Dumbbell Lateral Raise", "Cable Lateral Raise", "Machine Lateral Raise",
             "Front Cable Raise", "Front Dumbbell Raise", "Pull Up", "Chin Up",
             "Assissted Pullup", "Lat Pulldown", "Lat Pullover", "Single Arm Pulldown",
             "Barbell Row", "T Bar Row", "Landmine", "Machine Row",
@@ -106,7 +136,7 @@ client.on("interactionCreate", (interaction) =>{
             tempAccount.logSet(movement, weight, reps);
         }
         if(tempAccount.getLevel() > prevLvl){
-            interaction.channel.send(`@${interaction.user.tag} has levelled up to level ${tempAccount.getLevel()}!`)
+            interaction.channel.send(`${interaction.user} has levelled up to level ${tempAccount.getLevel()}!`)
         }
         //Reply in chat (will likely change to an embed later)
         if(sets > 1){
