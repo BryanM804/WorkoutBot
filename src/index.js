@@ -64,12 +64,21 @@ function checkSkips(){
             if(accounts[i].getHistory().length < 1)
                 continue;
 
-            for(let j = 0; j < accounts[i].getRestDays().length; j++){
-                let tempDate = new Date();
-            }
             const lastWorkout = new Date(accounts[i].getHistory()[accounts[i].getHistory().length - 1].getDate());
-            const daysSkipped = parseInt((Date.now() - lastWorkout.getTime()) / 86400000);
-    
+            let daysSkipped = 0;
+            let tempDate = new Date(Date.parse(new Date().toDateString())); //Removing the ms from the date (possibly very foolish)
+            while(parseInt((tempDate.getTime() - lastWorkout.getTime()) / 86400000) != 0){
+                restDay = false;
+                for(let j = 0; j < accounts[i].getRestDays().length; j++){
+                    if(tempDate.getDay() == accounts[i].getRestDays()[j]){
+                        restDay = true;
+                    }
+                }
+                tempDate.setTime(tempDate.getTime() - 86400000);
+                if(!restDay)
+                    daysSkipped++;
+            }
+
             if(daysSkipped > 0){
                 while(accounts[i].getSkipStreak() != daysSkipped){
                     accounts[i].skipDay();
