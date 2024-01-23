@@ -18,7 +18,7 @@ const fs = require("fs");
 const WorkoutDay = require(".\\WorkoutDay.js");
 
 class Account{
-    constructor(name, id, level, xp, creationDate, skipTotal, skipStreak, history){
+    constructor(name, id, level, xp, creationDate, skipTotal, skipStreak, restDays, history){
         this.name = name;
         this.id = id;
         this.level = level || 1;
@@ -26,6 +26,7 @@ class Account{
         this.creationDate = creationDate || new Date().toDateString();
         this.skipTotal = skipTotal || 0;
         this.skipStreak = skipStreak || 0;
+        this.restDays = restDays || [];
         //If the user has a history it converts the history it has read into WorkoutDay objects
         if(history != null && history.length > 0){
             this.history = []
@@ -48,7 +49,16 @@ class Account{
     getLevel(){
         return this.level;
     }
-    getHistory(days){
+    getHistory(){
+        return this.history;
+    }
+    getSkipStreak(){
+        return this.skipStreak;
+    }
+    getRestDays(){
+        return this.restDays;
+    }
+    getHistoryString(days){
         if(this.history.length < 1){
             return ("No history.");
         }
@@ -66,7 +76,7 @@ class Account{
     writeInfo(){
         fs.writeFile(this.file, JSON.stringify(this), (err) => {if(err) console.error(err)});
     }
-    //Overriding history and only saving one set for some reason
+
     logSet(movement, weight, reps){
         var today = new Date().toDateString();
         if(this.history.length >= 1 && this.history[this.history.length - 1].getDate() === today){
@@ -88,11 +98,61 @@ class Account{
             this.level++;
             console.log(`${this.name} levelled up to ${this.level}`);
         }
+        this.skipStreak = 0;
+        this.writeInfo();
+    }
+
+    skipDay(){
+        this.skipTotal++;
+        this.skipStreak++;
+        this.writeInfo();
+    }
+
+    setRestDays(newRestDays){
+        this.restDays = newRestDays;
         this.writeInfo();
     }
 
     toString(){
-        return `${this.name}\nCreated: ${this.creationDate}\nLevel: ${this.level}\nXP: ${this.xp}/${this.level * 1500}\nDays Skipped: ${this.skipTotal}`;
+        let restDaysString = "";
+        for(let i = 0; i < this.restDays.length; i++){
+            switch(this.restDays[i]){
+                case 0:
+                    restDaysString += "Sunday";
+                    break;
+                case 1:
+                    restDaysString += "Monday";
+                    break;
+                case 2:
+                    restDaysString += "Tuesday";
+                    break;
+                case 3:
+                    restDaysString += "Wednesday";
+                    break;
+                case 4:
+                    restDaysString += "Thursday";
+                    break;
+                case 5:
+                    restDaysString += "Friday";
+                    break;
+                case 6:
+                    restDaysString += "Saturday";
+                    break;
+            }
+            if(i != this.restDays.length - 1){
+                restDaysString += ", ";
+            }
+        }
+        if(restDaysString.length < 1){
+            restDaysString = "None"
+        }
+        return `${this.name}
+Created: ${this.creationDate}
+Level: ${this.level}
+XP: ${this.xp}/${this.level * 1500}
+Days Skipped: ${this.skipTotal}
+Current Skip Streak: ${this.skipStreak}
+Rest Days: ${restDaysString}`;
     }
 }
 

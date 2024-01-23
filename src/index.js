@@ -1,5 +1,5 @@
 const Account = require(".\\Account.js");
-const {Client, IntentsBitField, AutocompleteInteraction, CommandInteractionOptionResolver} = require('discord.js');
+const {Client, IntentsBitField, AutocompleteInteraction, CommandInteractionOptionResolver, User} = require('discord.js');
 const fs = require("fs");
 require("dotenv").config();
 
@@ -35,7 +35,7 @@ fs.readdir("accounts", (err, files) => {
             //When I figure out a more efficient way to convert from JSON to an Account object it will go here
             //If the program crahses the account file will be empty, this checks for that and restores the backups
             try{
-                accounts.push(new Account(JSON.parse(data).name, JSON.parse(data).id, JSON.parse(data).level, JSON.parse(data).xp, JSON.parse(data).creationDate, JSON.parse(data).skipTotal, JSON.parse(data).skipStreak, JSON.parse(data).history))
+                accounts.push(new Account(JSON.parse(data).name, JSON.parse(data).id, JSON.parse(data).level, JSON.parse(data).xp, JSON.parse(data).creationDate, JSON.parse(data).skipTotal, JSON.parse(data).skipStreak, JSON.parse(data).restDays, JSON.parse(data).history))
             }catch(error){
                 console.error(error)
                 console.log(`File was corrupted, attempting to restore backup.`)
@@ -45,7 +45,7 @@ fs.readdir("accounts", (err, files) => {
                         process.exit();
                     }
                     try{
-                        accounts.push(new Account(JSON.parse(backupData).name, JSON.parse(backupData).id, JSON.parse(backupData).level, JSON.parse(backupData).xp, JSON.parse(backupData).creationDate, JSON.parse(backupData).skipTotal, JSON.parse(backupData).skipStreak, JSON.parse(backupData).history))
+                        accounts.push(new Account(JSON.parse(backupData).name, JSON.parse(backupData).id, JSON.parse(backupData).level, JSON.parse(backupData).xp, JSON.parse(backupData).creationDate, JSON.parse(backupData).skipTotal, JSON.parse(backupData).skipStreak, JSON.parse(backupData).restDays, JSON.parse(backupData).history))
                     }catch(error2){
                         console.log(`ERROR: Backup was unreadable.`);
                         console.error(error2);
@@ -54,9 +54,30 @@ fs.readdir("accounts", (err, files) => {
                 });
             }
         })
-        //fs.copyFile(`accounts\\${files[i]}`, `backup\\${files[i]}`, (err) => {if(err) console.error(err)});
     }
 })
+
+//Checking if Users skipped a day
+function checkSkips(){
+    if(new Date().getHours() >= 23){
+        for(let i = 0; i < accounts.length; i++){
+            if(accounts[i].getHistory().length < 1)
+                continue;
+
+            for(let j = 0; j < accounts[i].getRestDays().length; j++){
+                let tempDate = new Date();
+            }
+            const lastWorkout = new Date(accounts[i].getHistory()[accounts[i].getHistory().length - 1].getDate());
+            const daysSkipped = parseInt((Date.now() - lastWorkout.getTime()) / 86400000);
+    
+            if(daysSkipped > 0){
+                while(accounts[i].getSkipStreak() != daysSkipped){
+                    accounts[i].skipDay();
+                }
+            }
+        }
+    }
+}
 
 function findAccount(name, id){
     for(let i = 0; i < accounts.length; i++){
@@ -80,12 +101,16 @@ client.on("ready", (c) => {
             fs.copyFile(`accounts\\${files[i]}`, `backup\\${files[i]}`, (cpyErr) => {if(cpyErr) console.error(cpyErr)});
         });
     }
+
+    setInterval(checkSkips, 21600000);
+    checkSkips();
+
     console.log(`${c.user.tag} is ready for gains.`);
 });
 
 //Ideally in the future this will be handled with a command handler
 client.on("interactionCreate", (interaction) =>{
-    if(interaction.isAutocomplete() && interaction.commandName === "log"){
+    if(interaction.isAutocomplete() && (interaction.commandName === "log" || interaction.commandName === "average")){
         const focused = interaction.options.getFocused();
         const choices = [
             "Barbell Bench Press", "Dumbbell Bench Press", "Chest Press Machine",
@@ -150,12 +175,62 @@ client.on("interactionCreate", (interaction) =>{
     if(interaction.commandName === "history"){
         const days = interaction.options.get("days")?.value ?? 3;
         const user = findAccount(interaction.user.username, interaction.user.id);
-        interaction.reply(user.getHistory(days));
+        interaction.reply(user.getHistoryString(days));
     }
 
     //Profile command handling
     if(interaction.commandName === "profile"){
-        interaction.reply(findAccount(interaction.user.username, interaction.user.id).toString());
+        const otherUser = interaction.options.get("user")?.user ?? null;
+        if(otherUser != null){
+            interaction.reply(findAccount(otherUser.username, otherUser.id).toString());
+        }else{
+            interaction.reply(findAccount(interaction.user.username, interaction.user.id).toString());
+        }
+    }
+
+    //Rest Day command handling
+    if(interaction.commandName === "restday"){
+        const userAccount = findAccount(interaction.user.username, interaction.user.id);
+        let currentDays = userAccount.getRestDays();
+        let chosenDay = "";
+        switch(interaction.options.get("day").value){
+            case 0:
+                chosenDay = "Sunday";
+                break;
+            case 1:
+                chosenDay = "Monday";
+                break;
+            case 2:
+                chosenDay = "Tuesday";
+                break;
+            case 3:
+                chosenDay = "Wednesday";
+                break;
+            case 4:
+                chosenDay = "Thursday";
+                break;
+            case 5:
+                chosenDay = "Friday";
+                break;
+            case 6:
+                chosenDay = "Saturday";
+                break;
+        }
+        let removed = false;
+        for(let i = 0; i < currentDays.length; i++){
+            if(currentDays[i] == interaction.options.get("day").value){
+                currentDays.splice(i,1)
+                userAccount.setRestDays(currentDays);
+                interaction.reply(`Removed ${chosenDay} from your rest days.`);
+                removed = true;
+                break;
+            }
+        }
+        if(!removed){
+            currentDays.push(interaction.options.get("day").value)
+            userAccount.setRestDays(currentDays);
+            interaction.reply(`Added ${chosenDay} to your rest days.`);
+        }
     }
 })
 
