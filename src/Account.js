@@ -1,19 +1,3 @@
-//File Format:
-//[name]
-//[id]
-//[level]
-//[xp]
-//[date created]
-//[skip total]
-//[skip streak]
-//History: (each consecutive day gets added to the bottom)
-//[day]
-//[movement]
-//[weight] * [reps] = [set total]
-//[daily total]
-
-//Things to fix:
-//If the program crashes the account file gets deleted.
 const fs = require("fs");
 const { EmbedBuilder } = require("discord.js");
 const WorkoutDay = require(".\\WorkoutDay.js");
@@ -184,7 +168,7 @@ Lifetime Total Sets: ${lifetimeCount}`;
     logSet(movement, weight, reps){
         let today = new Date().toDateString();
         if(this.history.length >= 1 && this.history[this.history.length - 1].getDate() === today){
-            this.history[this.history.length - 1].addSet(movement, weight, reps);
+            this.history[this.history.length - 1].addSet(movement, weight, reps, (weight * reps));
         }else{
             this.history.push(new WorkoutDay(new Date().toDateString()));
             console.log("created new day");
@@ -195,7 +179,9 @@ Lifetime Total Sets: ${lifetimeCount}`;
         //Dumbbell exercises count for double the weight internally
         if(movement.startsWith("Dumbbell")){
             this.xp += 100 + (2 * weight * reps);
+            this.history[this.history.length - 1].getSets()[this.history[this.history.length - 1].getSets().length - 1].setSetTotal((2 * weight * reps));
         }else if(movement.startsWith("Assisted")){
+            //If an exercise is assisted and the user has bodyweight registered this adjusts xp and total accordingly
             if(this.bodyweight > 0){
                 this.xp += 100 + ((this.bodyweight - weight) * reps);
                 this.history[this.history.length - 1].getSets()[this.history[this.history.length - 1].getSets().length - 1].setSetTotal((this.bodyweight - weight) * reps);
@@ -204,8 +190,10 @@ Lifetime Total Sets: ${lifetimeCount}`;
                 this.history[this.history.length - 1].getSets()[this.history[this.history.length - 1].getSets().length - 1].setSetTotal(0);
             }
         }else if(movement == "Pull Up" || movement == "Chin Up" || movement == "Dip"){
+            //If an exercise is a bodyweight exercise this adjusts xp and total accordingly
             if(this.bodyweight > 0){
-                this.xp += 100 + this.bodyweight + weight;
+                this.xp += 100 + ((this.bodyweight + weight) * reps);
+                this.history[this.history.length - 1].getSets()[this.history[this.history.length - 1].getSets().length - 1].setSetTotal((this.bodyweight + weight) * reps);
             }else{
                 this.xp += 100;
             }

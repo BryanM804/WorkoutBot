@@ -7,7 +7,7 @@ class WorkoutDay{
         if(sets != null && sets.length > 0){
             this.sets = [];
             for(let i = 0; i < sets.length; i++){
-                this.sets.push(new Set(sets[i].movement, sets[i].weight, sets[i].reps))
+                this.sets.push(new Set(sets[i].movement, sets[i].weight, sets[i].reps, sets[i].setTotal))
             }
         }else{
             this.sets = [];
@@ -27,18 +27,19 @@ class WorkoutDay{
             return;
         this.dayTotal = 0;
         for(let i = 0; i < this.sets.length; i++){
-            this.dayTotal += this.sets[i].setTotal;
+            this.dayTotal += this.sets[i].getSetTotal();
         }
         return this.dayTotal;
     }
 
-    addSet(movement, weight, reps){
-        this.sets.push(new Set(movement, weight, reps));
+    addSet(movement, weight, reps, setTotal){
+        this.sets.push(new Set(movement, weight, reps, setTotal));
         this.getTotal();
     }
 
     getEmbed(){
         let dayEmbed = new EmbedBuilder().setTitle(this.date);
+        this.getTotal();
         for(let i = 0; i < this.sets.length; i++){
             dayEmbed.addFields({ name: this.sets[i].getMovement(), value: `${this.sets[i].getWeight()}lbs for ${this.sets[i].getReps()} reps`, inline: true});
         }

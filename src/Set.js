@@ -1,14 +1,9 @@
 class Set{
-    constructor(movement, weight, reps){
+    constructor(movement, weight, reps, setTotal){
         this.movement = movement;
         this.weight = weight;
         this.reps = reps;
-        //Dumbbell exercises count for double the weight internally
-        if(movement.startsWith("Dumbbell")){
-            this.setTotal = 2 * weight * reps;
-        }else{
-            this.setTotal = weight * reps;
-        }
+        this.setTotal = setTotal;
     }
 
     getMovement(){
