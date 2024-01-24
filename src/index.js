@@ -97,7 +97,7 @@ function checkSkips(){
 //Returns the Account from the array of accounts that matches the name and id
 function findAccount(name, id){
     for(let i = 0; i < accounts.length; i++){
-        if(accounts[i].id === id){
+        if(accounts[i].getId() === id){
             return accounts[i];
         }
     }
@@ -210,9 +210,11 @@ client.on("interactionCreate", (interaction) =>{
         }
         //Reply in chat (will likely change to an embed later)
         if(sets > 1){
-            interaction.reply(`Logged ${sets} sets of ${movement} ${weight}lbs for ${reps} reps.`)
+            interaction.reply(`Logged ${sets} sets of ${movement} ${weight}lbs for ${reps} reps.`);
+        }else if(weight >= 1){
+            interaction.reply(`Logged ${movement} ${weight}lbs for ${reps} reps.`);
         }else{
-            interaction.reply(`Logged ${movement} ${weight}lbs for ${reps} reps.`)
+            interaction.reply(`Logged ${movement} for ${reps} reps.`);
         }
     }
 
@@ -238,7 +240,16 @@ client.on("interactionCreate", (interaction) =>{
         const otherUser = interaction.options.get("user")?.user ?? null;
         if(otherUser != null){
             //interaction.reply(findAccount(otherUser.username, otherUser.id).toString());
-            interaction.reply({ embeds: [findAccount(otherUser.username, otherUser.id).getProfileEmbed(otherUser)] });
+            //This command checks if a user has a profile or not since I want the creation date to reflect when that user actually started using the app.
+            let exists = false;
+            for(let i = 0; i < accounts.length; i++){
+                if(accounts[i].getId() == otherUser.id)
+                    exists = true;
+            }
+            if(exists)
+                interaction.reply({ embeds: [findAccount(otherUser.username, otherUser.id).getProfileEmbed(otherUser)] });
+            else
+                interaction.reply(`${otherUser.displayName} has no profile.`);
         }else{
             //interaction.reply(findAccount(interaction.user.username, interaction.user.id).toString());
             interaction.reply({ embeds: [findAccount(interaction.user.username, interaction.user.id).getProfileEmbed(interaction.user)] });
