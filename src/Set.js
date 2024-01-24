@@ -23,6 +23,9 @@ class Set{
     getSetTotal(){
         return this.setTotal;
     }
+    setSetTotal(newTotal){
+        this.setTotal = newTotal;
+    }
 
     toString(){
         return (`${this.movement}: ${this.weight}lbs ${this.reps} reps`)

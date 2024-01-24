@@ -41,7 +41,7 @@ fs.readdir("accounts", (err, files) => {
             //When I figure out a more efficient way to convert from JSON to an Account object it will go here
             //If the program crahses the account file will be empty, this checks for that and restores the backups
             try{
-                accounts.push(new Account(JSON.parse(data).name, JSON.parse(data).id, JSON.parse(data).level, JSON.parse(data).xp, JSON.parse(data).creationDate, JSON.parse(data).skipTotal, JSON.parse(data).skipStreak, JSON.parse(data).restDays, JSON.parse(data).history))
+                accounts.push(new Account(JSON.parse(data).name, JSON.parse(data).id, JSON.parse(data).bodyweight, JSON.parse(data).level, JSON.parse(data).xp, JSON.parse(data).creationDate, JSON.parse(data).skipTotal, JSON.parse(data).skipStreak, JSON.parse(data).restDays, JSON.parse(data).history))
             }catch(error){
                 console.error(error)
                 console.log(`File was corrupted, attempting to restore backup.`)
@@ -51,7 +51,7 @@ fs.readdir("accounts", (err, files) => {
                         process.exit();
                     }
                     try{
-                        accounts.push(new Account(JSON.parse(backupData).name, JSON.parse(backupData).id, JSON.parse(backupData).level, JSON.parse(backupData).xp, JSON.parse(backupData).creationDate, JSON.parse(backupData).skipTotal, JSON.parse(backupData).skipStreak, JSON.parse(backupData).restDays, JSON.parse(backupData).history))
+                        accounts.push(new Account(JSON.parse(backupData).name, JSON.parse(backupData).id, JSON.parse(backupData).bodyweight, JSON.parse(backupData).level, JSON.parse(backupData).xp, JSON.parse(backupData).creationDate, JSON.parse(backupData).skipTotal, JSON.parse(backupData).skipStreak, JSON.parse(backupData).restDays, JSON.parse(backupData).history))
                     }catch(error2){
                         console.log(`ERROR: Backup was unreadable.`);
                         console.error(error2);
@@ -161,14 +161,14 @@ client.on("interactionCreate", (interaction) =>{
             "Barbell Bench Press", "Dumbbell Bench Press", "Chest Press Machine",
             "Incline Barbell Bench Press", "Incline Dumbbell Bench Press", "Incline Chest Press Machine",
             "Decline Barbell Bench Press", "Decline Dumbbell Bench Press", "Decline Chest Press Machine",
-            "Dip", "Assissted Dip", "Barbell Shoulder Press/Military Press",
+            "Dip", "Assisted Dip", "Barbell Shoulder Press/Military Press",
             "Dumbbell Shoulder Press", "Arnold Press", "Machine Shoulder Press",
             "Dumbbell Lateral Raise", "Cable Lateral Raise", "Machine Lateral Raise",
             "Front Cable Raise", "Front Dumbbell Raise", "Pull Up", "Chin Up",
-            "Assissted Pullup", "Lat Pulldown", "Lat Pullover", "Single Arm Pulldown",
+            "Assisted Pullup", "Lat Pulldown", "Lat Pullover", "Single Arm Pulldown",
             "Barbell Row", "T Bar Row", "Landmine", "Machine Row",
-            "Machine Pulldown", "Cable Row", "Face Pull",
-            "Rear Delt Fly", "Rear Delt Ski", "Romanian Deadlift",
+            "Machine Pulldown", "Cable Row", "Face Pull", "Dumbbell Rear Delt Fly",
+            "Machine Rear Delt Fly", "Rear Delt Ski", "Dumbbell Rear Delt Ski", "Romanian Deadlift",
             "Bulgarian Split Squat", "Good Morning", "Lunge",
             "Reverse Lunge", "Hip Abduction", "Hip Adduction",
             "Calf Raise", "Cable Crunch", "Goblett Squat",
@@ -288,6 +288,13 @@ client.on("interactionCreate", (interaction) =>{
             userAccount.setRestDays(currentDays);
             interaction.reply(`Added ${chosenDay} to your rest days.`);
         }
+    }
+
+    //Bodyweight command handling
+    if(interaction.commandName === "bodyweight"){
+        let bw = interaction.options.get("weight").value;
+        findAccount(interaction.user.username, interaction.user.id).setBodyweight(bw);
+        interaction.reply(`Set your body weight to ${bw}lbs.`);
     }
 
     //Stats command handling

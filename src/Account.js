@@ -19,9 +19,10 @@ const { EmbedBuilder } = require("discord.js");
 const WorkoutDay = require(".\\WorkoutDay.js");
 
 class Account{
-    constructor(name, id, level, xp, creationDate, skipTotal, skipStreak, restDays, history){
+    constructor(name, id, bodyweight, level, xp, creationDate, skipTotal, skipStreak, restDays, history){
         this.name = name;
         this.id = id;
+        this.bodyweight = bodyweight || 0;
         this.level = level || 1;
         this.xp = xp || 0;
         this.creationDate = creationDate || new Date().toDateString();
@@ -46,6 +47,9 @@ class Account{
     }
     getId(){
         return this.id;
+    }
+    getBodyweight(){
+        return this.bodyweight;
     }
     getLevel(){
         return this.level;
@@ -100,20 +104,6 @@ Average lifetime set total: ${lifeTimeAvg}
 Lifetime Set Total Improvement: +${lifeTimeImprovement}
 Lifetime Total Sets: ${lifetimeCount}`;
     }
-    /*getHistoryString(days){
-        if(this.history.length < 1){
-            return ("No history.");
-        }
-        let returnString = "";
-        let printDays = days;
-        if(this.history.length < days){
-            printDays = this.history.length;
-        }
-        for(let i = 1; i <= printDays; i++){
-            returnString += this.history[this.history.length - i].toString();
-        }
-        return returnString;
-    }*/
 
     getHistoryEmbeds(days){
         if(this.history.length < 1){
@@ -175,10 +165,14 @@ Lifetime Total Sets: ${lifetimeCount}`;
             .setTitle(this.name)
             .setThumbnail(user.avatarURL())
             .setDescription(`Created ${this.creationDate}`)
-            .addFields({ name: `Level ${this.level}`, value: `XP: ${this.xp}/${this.level * 1500}` })
-            .addFields({ name: `Days Skipped: ${this.skipTotal}`, value: " " })
-            .addFields({ name: `Current Skip Streak: ${this.skipStreak}`, value: " " })
-            .addFields({ name: "Rest Days", value: this.getRestDayString() });
+            .addFields({ name: `Level ${this.level}`, value: `XP: ${this.xp}/${this.level * 1500}` });
+            if(this.bodyweight > 0){
+                profileEmbed.addFields({ name: `Body weight:`, value: `${this.bodyweight}lbs` });
+            }
+            profileEmbed
+            .addFields({ name: `Days Skipped:`, value: ` ${this.skipTotal} days` })
+            .addFields({ name: `Current Skip Streak:`, value: `${this.skipStreak} days` })
+            .addFields({ name: "Rest Days:", value: this.getRestDayString() });
 
         return profileEmbed;
     }
@@ -195,11 +189,26 @@ Lifetime Total Sets: ${lifetimeCount}`;
             this.history.push(new WorkoutDay(new Date().toDateString()));
             console.log("created new day");
             this.logSet(movement, weight, reps);
+            return;
         }
 
         //Dumbbell exercises count for double the weight internally
         if(movement.startsWith("Dumbbell")){
             this.xp += 100 + (2 * weight * reps);
+        }else if(movement.startsWith("Assisted")){
+            if(this.bodyweight > 0){
+                this.xp += 100 + ((this.bodyweight - weight) * reps);
+                this.history[this.history.length - 1].getSets()[this.history[this.history.length - 1].getSets().length - 1].setSetTotal((this.bodyweight - weight) * reps);
+            }else{
+                this.xp += 100;
+                this.history[this.history.length - 1].getSets()[this.history[this.history.length - 1].getSets().length - 1].setSetTotal(0);
+            }
+        }else if(movement == "Pull Up" || movement == "Chin Up" || movement == "Dip"){
+            if(this.bodyweight > 0){
+                this.xp += 100 + this.bodyweight + weight;
+            }else{
+                this.xp += 100;
+            }
         }else{
             this.xp += 100 + weight * reps;
         }
@@ -215,6 +224,11 @@ Lifetime Total Sets: ${lifetimeCount}`;
     skipDay(){
         this.skipTotal++;
         this.skipStreak++;
+        this.writeInfo();
+    }
+
+    setBodyweight(newBodyweight){
+        this.bodyweight = newBodyweight;
         this.writeInfo();
     }
 

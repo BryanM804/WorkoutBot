@@ -166,6 +166,18 @@ const commands = [
             }
 
         ]
+    },
+    {
+        name: "bodyweight",
+        description: "Set your body weight to gain xp from bodyweight and assisted exercises.",
+        options: [
+            {
+                name: "weight",
+                description: "Your body weight.",
+                type: ApplicationCommandOptionType.Number,
+                required: true
+            }
+        ]
     }
 
 ];
