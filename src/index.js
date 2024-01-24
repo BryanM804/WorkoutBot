@@ -110,22 +110,34 @@ function findAccount(name, id){
 function sortAccounts(sortby){
     switch(sortby){
         case "Level":
-            
+            accounts.sort((a, b) => {
+                return b.getLevel() - a.getLevel();
+            });
             break;
         case "Days Skipped":
-            
+            accounts.sort((a, b) => {
+                return b.getSkipTotal() - a.getSkipTotal();
+            });
             break;
         case "Skip Streak":
-            
+            accounts.sort((a, b) => {
+                return b.getSkipStreak() - a.getSkipStreak();
+            });
             break;
         case "Days Logged":
-            
+            accounts.sort((a, b) => {
+                return b.getTotalDays() - a.getTotalDays();
+            });
             break;
         case "Cardio Total":
-            
+            accounts.sort((a, b) => {
+                return b.getLevel() - a.getLevel(); //Change to cardio later
+            });
             break;
         case "Date Created":
-            
+            accounts.sort((a, b) => {
+                return Date.parse(a.getCreationDate()) - Date.parse(b.getCreationDate());
+            });
             break;
     }
 }
@@ -318,6 +330,7 @@ client.on("interactionCreate", (interaction) =>{
         let leaderBoardEmbed = new EmbedBuilder()
         .setTitle(`Leaderboard`)
         .setDescription(`Sorted by ${interaction.options.get("stat").value}`);
+        sortAccounts(interaction.options.get("stat").value);
         for(let i = 0; i < accounts.length; i++){
             switch(interaction.options.get("stat").value){
                 case "Level":
