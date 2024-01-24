@@ -1,7 +1,13 @@
 const Account = require(".\\Account.js");
-const {Client, IntentsBitField, AutocompleteInteraction, CommandInteractionOptionResolver, User} = require('discord.js');
+const { HelpEmbed } = require(".\\Embeds.js")
+const {Client, IntentsBitField, AutocompleteInteraction, CommandInteractionOptionResolver, User, ActivityType, EmbedBuilder} = require("discord.js");
 const fs = require("fs");
 require("dotenv").config();
+
+//To do list:
+//Make embeds for things
+//cardio command
+//stats for sets
 
 const client = new Client({
     intents: [
@@ -88,6 +94,7 @@ function checkSkips(){
     }
 }
 
+//Returns the Account from the array of accounts that matches the name and id
 function findAccount(name, id){
     for(let i = 0; i < accounts.length; i++){
         if(accounts[i].id === id){
@@ -97,6 +104,30 @@ function findAccount(name, id){
     accounts.push(new Account(name, id));
     console.log(`Created new account for ${name}`);
     return accounts[accounts.length - 1];
+}
+
+//Sorts the accounts array by the type specified
+function sortAccounts(sortby){
+    switch(sortby){
+        case "Level":
+            
+            break;
+        case "Days Skipped":
+            
+            break;
+        case "Skip Streak":
+            
+            break;
+        case "Days Logged":
+            
+            break;
+        case "Cardio Total":
+            
+            break;
+        case "Date Created":
+            
+            break;
+    }
 }
 
 client.on("ready", (c) => {
@@ -114,12 +145,17 @@ client.on("ready", (c) => {
     setInterval(checkSkips, 21600000);
     checkSkips();
 
+    client.user.setActivity({
+        name: "with heavy circles",
+        type: ActivityType.Playing
+    })
     console.log(`${c.user.tag} is ready for gains.`);
 });
 
 //Ideally in the future this will be handled with a command handler
 client.on("interactionCreate", (interaction) =>{
-    if(interaction.isAutocomplete() && (interaction.commandName === "log" || interaction.commandName === "average")){
+    //Autocomplete for the giant list of exercises
+    if(interaction.isAutocomplete() && (interaction.commandName === "log" || interaction.commandName === "stats")){
         const focused = interaction.options.getFocused();
         const choices = [
             "Barbell Bench Press", "Dumbbell Bench Press", "Chest Press Machine",
@@ -154,18 +190,18 @@ client.on("interactionCreate", (interaction) =>{
 
     //Help command handling
     if(interaction.commandName === "help"){
-        console.log(interaction);
+        interaction.reply({ embeds: [ HelpEmbed ] });
     }
     
     //Log command handling
     if(interaction.commandName === "log"){
-        var movement = interaction.options.get("movement").value;
-        var weight = interaction.options.get("weight")?.value ?? 0;
-        var reps = interaction.options.get("reps")?.value ?? 0;
-        var sets = interaction.options.get("sets")?.value ?? 1;
+        let movement = interaction.options.get("movement").value;
+        let weight = interaction.options.get("weight")?.value ?? 0;
+        let reps = interaction.options.get("reps")?.value ?? 0;
+        let sets = interaction.options.get("sets")?.value ?? 1;
         console.log(`${interaction.user.username} Logged: ${movement} ${weight} lbs, ${reps} reps, and ${sets} sets.`)
-        var tempAccount = findAccount(interaction.user.username, interaction.user.id)
-        var prevLvl = tempAccount.getLevel();
+        let tempAccount = findAccount(interaction.user.username, interaction.user.id)
+        let prevLvl = tempAccount.getLevel();
         for(let i = 0; i < sets; i++){
             tempAccount.logSet(movement, weight, reps);
         }
@@ -180,20 +216,32 @@ client.on("interactionCreate", (interaction) =>{
         }
     }
 
+    //Cardio command handling
+    if(interaction.commandName === "cardio"){
+
+    }
+
     //History command handling
     if(interaction.commandName === "history"){
-        const days = interaction.options.get("days")?.value ?? 3;
-        const user = findAccount(interaction.user.username, interaction.user.id);
-        interaction.reply(user.getHistoryString(days));
+        let days = interaction.options.get("days")?.value ?? 3;
+        if(days <= 0){
+            interaction.reply("Invalid number of days.")
+        }else{
+            //interaction.reply(findAccount(interaction.user.username, interaction.user.id).getHistoryString(days));
+            let historyEmbeds = findAccount(interaction.user.username, interaction.user.id).getHistoryEmbeds(days);
+            interaction.reply({embeds: historyEmbeds});
+        }
     }
 
     //Profile command handling
     if(interaction.commandName === "profile"){
         const otherUser = interaction.options.get("user")?.user ?? null;
         if(otherUser != null){
-            interaction.reply(findAccount(otherUser.username, otherUser.id).toString());
+            //interaction.reply(findAccount(otherUser.username, otherUser.id).toString());
+            interaction.reply({ embeds: [findAccount(otherUser.username, otherUser.id).getProfileEmbed(otherUser)] });
         }else{
-            interaction.reply(findAccount(interaction.user.username, interaction.user.id).toString());
+            //interaction.reply(findAccount(interaction.user.username, interaction.user.id).toString());
+            interaction.reply({ embeds: [findAccount(interaction.user.username, interaction.user.id).getProfileEmbed(interaction.user)] });
         }
     }
 
@@ -241,6 +289,43 @@ client.on("interactionCreate", (interaction) =>{
             interaction.reply(`Added ${chosenDay} to your rest days.`);
         }
     }
+
+    //Stats command handling
+    if(interaction.commandName === "stats"){
+        interaction.reply(findAccount(interaction.user.username, interaction.user.id).getStats(interaction.options.get("movement").value));
+    }
+
+    //Leaderboard command Handling
+    if(interaction.commandName === "leaderboard"){
+        let leaderBoardEmbed = new EmbedBuilder()
+        .setTitle(`Leaderboard`)
+        .setDescription(`Sorted by ${interaction.options.get("stat").value}`);
+        for(let i = 0; i < accounts.length; i++){
+            switch(interaction.options.get("stat").value){
+                case "Level":
+                    leaderBoardEmbed.addFields({ name: accounts[i].getName(), value: `Level: ${accounts[i].getLevel()}` });
+                    break;
+                case "Days Skipped":
+                    leaderBoardEmbed.addFields({ name: accounts[i].getName(), value: `Days Skipped: ${accounts[i].getSkipTotal()}` });
+                    break;
+                case "Skip Streak":
+                    leaderBoardEmbed.addFields({ name: accounts[i].getName(), value: `Skip Streak: ${accounts[i].getSkipStreak()}` });
+                    break;
+                case "Days Logged":
+                    leaderBoardEmbed.addFields({ name: accounts[i].getName(), value: `Days Logged: ${accounts[i].getTotalDays()}` });
+                    break;
+                case "Cardio Total":
+                    leaderBoardEmbed.addFields({ name: accounts[i].getName(), value: `Cardio Total: ${accounts[i].getName()} minutes` });
+                    break;
+                case "Date Created":
+                    leaderBoardEmbed.addFields({ name: accounts[i].getName(), value: `Date Created: ${accounts[i].getCreationDate()}` });
+                    break;
+            }
+        }
+        interaction.reply({ embeds: [leaderBoardEmbed] });
+    }
+
+
 })
 
 client.login(process.env.TOKEN);

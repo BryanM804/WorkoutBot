@@ -15,6 +15,7 @@
 //Things to fix:
 //If the program crashes the account file gets deleted.
 const fs = require("fs");
+const { EmbedBuilder } = require("discord.js");
 const WorkoutDay = require(".\\WorkoutDay.js");
 
 class Account{
@@ -49,21 +50,62 @@ class Account{
     getLevel(){
         return this.level;
     }
+    getCreationDate(){
+        return this.creationDate;
+    }
     getHistory(){
         return this.history;
+    }
+    getSkipTotal(){
+        return this.skipTotal;
     }
     getSkipStreak(){
         return this.skipStreak;
     }
+    getTotalDays(){
+        return this.history.length;
+    }
     getRestDays(){
         return this.restDays;
     }
-    getHistoryString(days){
+    getStats(movement){
+        if(movement == null)
+            return;
+
+        let lifeTimeAvg = 0;
+        let lifetimeCount = 0;
+        let lifeTimeImprovement = 0;
+        let firstOccurence = true;
+        let lastOccurence;
+
+        for(let i = 0; i < this.history.length; i++){
+            for(let j = 0; j < this.history[i].getSets().length; j++){
+                if(this.history[i].getSets()[j].getMovement() == movement){
+                    if(firstOccurence){
+                        lifeTimeImprovement = this.history[i].getSets()[j].getSetTotal();
+                        firstOccurence = false;
+                    }
+
+                    lifetimeCount++;
+                    lifeTimeAvg += this.history[i].getSets()[j].getSetTotal();
+                    lastOccurence = this.history[i].getSets()[j];
+                }
+            }
+        }
+        lifeTimeImprovement = lastOccurence.getSetTotal() - lifeTimeImprovement;
+        lifeTimeAvg = lifeTimeAvg/lifetimeCount;
+
+        return `${movement}:
+Average lifetime set total: ${lifeTimeAvg}
+Lifetime Set Total Improvement: +${lifeTimeImprovement}
+Lifetime Total Sets: ${lifetimeCount}`;
+    }
+    /*getHistoryString(days){
         if(this.history.length < 1){
             return ("No history.");
         }
-        var returnString = "";
-        var printDays = days;
+        let returnString = "";
+        let printDays = days;
         if(this.history.length < days){
             printDays = this.history.length;
         }
@@ -71,6 +113,74 @@ class Account{
             returnString += this.history[this.history.length - i].toString();
         }
         return returnString;
+    }*/
+
+    getHistoryEmbeds(days){
+        if(this.history.length < 1){
+            return new EmbedBuilder().setTitle("No history.");
+        }
+
+        let historyEmbeds = [];
+        let printDays = days;
+        if(days > 25){
+            printDays = 25;
+        }
+        if(this.history.length < days){
+            printDays = this.history.length;
+        }
+        for(let i = printDays; i >= 1; i--){
+            historyEmbeds.push(this.history[this.history.length - i].getEmbed());
+        }
+        return historyEmbeds;
+    }
+
+    getRestDayString(){
+        let restDaysString = "";
+        for(let i = 0; i < this.restDays.length; i++){
+            switch(this.restDays[i]){
+                case 0:
+                    restDaysString += "Sunday";
+                    break;
+                case 1:
+                    restDaysString += "Monday";
+                    break;
+                case 2:
+                    restDaysString += "Tuesday";
+                    break;
+                case 3:
+                    restDaysString += "Wednesday";
+                    break;
+                case 4:
+                    restDaysString += "Thursday";
+                    break;
+                case 5:
+                    restDaysString += "Friday";
+                    break;
+                case 6:
+                    restDaysString += "Saturday";
+                    break;
+            }
+            if(i != this.restDays.length - 1){
+                restDaysString += ", ";
+            }
+        }
+        if(restDaysString.length < 1){
+            restDaysString = "None"
+        }
+        return restDaysString;
+    }
+
+    getProfileEmbed(user){
+        let profileEmbed = new EmbedBuilder()
+            .setTitle(this.name)
+            .setThumbnail(user.avatarURL())
+            .setDescription(`Created ${this.creationDate}`)
+            .addFields({ name: `Level ${this.level}`, value: `XP: ${this.xp}/${this.level * 1500}` })
+            .addFields({ name: `Days Skipped: ${this.skipTotal}`, value: " " })
+            .addFields({ name: `Current Skip Streak: ${this.skipStreak}`, value: " " })
+            .addFields({ name: "Rest Days", value: this.getRestDayString() });
+
+        return profileEmbed;
     }
 
     writeInfo(){
@@ -78,7 +188,7 @@ class Account{
     }
 
     logSet(movement, weight, reps){
-        var today = new Date().toDateString();
+        let today = new Date().toDateString();
         if(this.history.length >= 1 && this.history[this.history.length - 1].getDate() === today){
             this.history[this.history.length - 1].addSet(movement, weight, reps);
         }else{
@@ -114,45 +224,13 @@ class Account{
     }
 
     toString(){
-        let restDaysString = "";
-        for(let i = 0; i < this.restDays.length; i++){
-            switch(this.restDays[i]){
-                case 0:
-                    restDaysString += "Sunday";
-                    break;
-                case 1:
-                    restDaysString += "Monday";
-                    break;
-                case 2:
-                    restDaysString += "Tuesday";
-                    break;
-                case 3:
-                    restDaysString += "Wednesday";
-                    break;
-                case 4:
-                    restDaysString += "Thursday";
-                    break;
-                case 5:
-                    restDaysString += "Friday";
-                    break;
-                case 6:
-                    restDaysString += "Saturday";
-                    break;
-            }
-            if(i != this.restDays.length - 1){
-                restDaysString += ", ";
-            }
-        }
-        if(restDaysString.length < 1){
-            restDaysString = "None"
-        }
         return `${this.name}
 Created: ${this.creationDate}
 Level: ${this.level}
 XP: ${this.xp}/${this.level * 1500}
 Days Skipped: ${this.skipTotal}
 Current Skip Streak: ${this.skipStreak}
-Rest Days: ${restDaysString}`;
+Rest Days: ${this.getRestDayString()}`;
     }
 }
 

@@ -11,6 +11,19 @@ class Set{
         }
     }
 
+    getMovement(){
+        return this.movement;
+    }
+    getWeight(){
+        return this.weight;
+    }
+    getReps(){
+        return this.reps;
+    }
+    getSetTotal(){
+        return this.setTotal;
+    }
+
     toString(){
         return (`${this.movement}: ${this.weight}lbs ${this.reps} reps`)
     }

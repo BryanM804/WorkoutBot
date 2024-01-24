@@ -53,7 +53,7 @@ const commands = [
     },
     {
         name: "history",
-        description: "Get your history log up to 30 days",
+        description: "Get your history log up to 25 days",
         options: [
             {
                 name: "days",
@@ -74,8 +74,8 @@ const commands = [
         ]
     },
     {
-        name: "average",
-        description: "See your average total for a specific movement.",
+        name: "stats",
+        description: "See statistics for a specific movement.",
         options: [
             {
                 name: "movement",
@@ -126,6 +126,45 @@ const commands = [
                     }
                 ]
             }
+        ]
+    },
+    {
+        name: "leaderboard",
+        description: "Leaderboard sorted by level by default.",
+        options: [
+            {
+                name: "stat",
+                description: "Statistic to sort by.",
+                type: ApplicationCommandOptionType.String,
+                required: true,
+                choices: [
+                    {
+                        name: "Level",
+                        value: "Level"
+                    },
+                    {
+                        name: "Days Skipped",
+                        value: "Days Skipped"
+                    },
+                    {
+                        name: "Current Skip Streak",
+                        value: "Skip Streak"
+                    },
+                    {
+                        name: "Days Logged",
+                        value: "Days Logged"
+                    },
+                    {
+                        name: "Cardio Total",
+                        value: "Cardio Total"
+                    },
+                    {
+                        name: "Date Created",
+                        value: "Date Created"
+                    }
+                ]
+            }
+
         ]
     }
 
