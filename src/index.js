@@ -1,11 +1,11 @@
 const Account = require(".\\Account.js");
-const { HelpEmbed } = require(".\\Embeds.js")
+const { HelpEmbed } = require("..\\utils\\Embeds.js");
+const { ExerciseList } = require("..\\utils\\Exercises.js");
 const {Client, IntentsBitField, AutocompleteInteraction, CommandInteractionOptionResolver, User, ActivityType, EmbedBuilder} = require("discord.js");
 const fs = require("fs");
 require("dotenv").config();
 
 //To do list:
-//Make embeds for things
 //cardio command
 //stats for sets
 
@@ -41,7 +41,7 @@ fs.readdir("accounts", (err, files) => {
             //When I figure out a more efficient way to convert from JSON to an Account object it will go here
             //If the program crahses the account file will be empty, this checks for that and restores the backups
             try{
-                accounts.push(new Account(JSON.parse(data).name, JSON.parse(data).id, JSON.parse(data).bodyweight, JSON.parse(data).level, JSON.parse(data).xp, JSON.parse(data).creationDate, JSON.parse(data).skipTotal, JSON.parse(data).skipStreak, JSON.parse(data).restDays, JSON.parse(data).history))
+                accounts.push(new Account(JSON.parse(data).name, JSON.parse(data).id, JSON.parse(data).bodyweight, JSON.parse(data).level, JSON.parse(data).xp, JSON.parse(data).creationDate, JSON.parse(data).skipTotal, JSON.parse(data).skipStreak, JSON.parse(data).restDays, JSON.parse(data).squat, JSON.parse(data).bench, JSON.parse(data).deadlift, JSON.parse(data).history))
             }catch(error){
                 console.error(error)
                 console.log(`File was corrupted, attempting to restore backup.`)
@@ -51,7 +51,7 @@ fs.readdir("accounts", (err, files) => {
                         process.exit();
                     }
                     try{
-                        accounts.push(new Account(JSON.parse(backupData).name, JSON.parse(backupData).id, JSON.parse(backupData).bodyweight, JSON.parse(backupData).level, JSON.parse(backupData).xp, JSON.parse(backupData).creationDate, JSON.parse(backupData).skipTotal, JSON.parse(backupData).skipStreak, JSON.parse(backupData).restDays, JSON.parse(backupData).history))
+                        accounts.push(new Account(JSON.parse(backupData).name, JSON.parse(backupData).id, JSON.parse(backupData).bodyweight, JSON.parse(backupData).level, JSON.parse(backupData).xp, JSON.parse(backupData).creationDate, JSON.parse(backupData).skipTotal, JSON.parse(backupData).skipStreak, JSON.parse(backupData).restDays, JSON.parse(backupData).squat, JSON.parse(backupData).bench, JSON.parse(backupData).deadlift, JSON.parse(backupData).history))
                     }catch(error2){
                         console.log(`ERROR: Backup was unreadable.`);
                         console.error(error2);
@@ -111,7 +111,11 @@ function sortAccounts(sortby){
     switch(sortby){
         case "Level":
             accounts.sort((a, b) => {
-                return b.getLevel() - a.getLevel();
+                if(a.getLevel() == b.getLevel()){
+                    return b.getXp() - a.getXp();
+                }else{
+                    return b.getLevel() - a.getLevel();
+                }
             });
             break;
         case "Days Skipped":
@@ -139,225 +143,231 @@ function sortAccounts(sortby){
                 return Date.parse(a.getCreationDate()) - Date.parse(b.getCreationDate());
             });
             break;
+        case "Powerlifting Total":
+            accounts.sort((a, b) => {
+                return b.getTotal() - a.getTotal();
+            });
     }
 }
 
-client.on("ready", (c) => {
-    for(let i = 0; i < accounts.length; i++){
-        fs.readdir("accounts", (err, files) => {
-            if(err)
-                console.error(err);
-            //Because the file functions are running async the backup has to be done once the bot is ready since
-            //it ensures the accounts are all loaded in and it won't just make an empty backup.
-            //I may change this later.
-            fs.copyFile(`accounts\\${files[i]}`, `backup\\${files[i]}`, (cpyErr) => {if(cpyErr) console.error(cpyErr)});
-        });
-    }
-
-    setInterval(checkSkips, 21600000);
-    checkSkips();
-
-    client.user.setActivity({
-        name: "with heavy circles",
-        type: ActivityType.Playing
-    })
-    console.log(`${c.user.tag} is ready for gains.`);
-});
-
-//Ideally in the future this will be handled with a command handler
-client.on("interactionCreate", (interaction) =>{
-    //Autocomplete for the giant list of exercises
-    if(interaction.isAutocomplete() && (interaction.commandName === "log" || interaction.commandName === "stats")){
-        const focused = interaction.options.getFocused();
-        const choices = [
-            "Barbell Bench Press", "Dumbbell Bench Press", "Chest Press Machine",
-            "Incline Barbell Bench Press", "Incline Dumbbell Bench Press", "Incline Chest Press Machine",
-            "Decline Barbell Bench Press", "Decline Dumbbell Bench Press", "Decline Chest Press Machine",
-            "Dip", "Assisted Dip", "Barbell Shoulder Press/Military Press",
-            "Dumbbell Shoulder Press", "Arnold Press", "Machine Shoulder Press",
-            "Dumbbell Lateral Raise", "Cable Lateral Raise", "Machine Lateral Raise",
-            "Front Cable Raise", "Front Dumbbell Raise", "Pull Up", "Chin Up",
-            "Assisted Pullup", "Lat Pulldown", "Lat Pullover", "Single Arm Pulldown",
-            "Barbell Row", "T Bar Row", "Landmine", "Machine Row",
-            "Machine Pulldown", "Cable Row", "Face Pull", "Dumbbell Rear Delt Fly",
-            "Machine Rear Delt Fly", "Rear Delt Ski", "Dumbbell Rear Delt Ski", "Romanian Deadlift",
-            "Bulgarian Split Squat", "Good Morning", "Lunge",
-            "Reverse Lunge", "Hip Abduction", "Hip Adduction",
-            "Calf Raise", "Cable Crunch", "Goblett Squat",
-            "Barbell Squat", "Leg Extension", "Hamstring Curl",
-            "Lying Hamstring Curl", "Deadlift", "Tricep Pulldown",
-            "Overhead Tricep Extension", "Tricep Pushdown", "Single Arm Tricep Extension",
-            "Tricep Machine", "Dumbbell Bicep Curl", "Hammer Curl", "Zottman Curl",
-            "Barbell Bicep Curl", "Preacher Curl", "Bicep Curl Machine", "Preacher Curl Machine",
-            "Reverse Curl"
-    
-        ];
-        const filtered = choices.filter(choice => choice.toLowerCase().indexOf(focused.toLowerCase()) >= 0);
-        interaction.respond(
-            filtered.slice(0,24).map(choice => ({name: choice, value: choice}))
-        );
-    }
-
-    if(!interaction.isChatInputCommand()) return;
-
-    //Help command handling
-    if(interaction.commandName === "help"){
-        interaction.reply({ embeds: [ HelpEmbed ] });
-    }
-    
-    //Log command handling
-    if(interaction.commandName === "log"){
-        let movement = interaction.options.get("movement").value;
-        let weight = interaction.options.get("weight")?.value ?? 0;
-        let reps = interaction.options.get("reps")?.value ?? 0;
-        let sets = interaction.options.get("sets")?.value ?? 1;
-        console.log(`${interaction.user.username} Logged: ${movement} ${weight} lbs, ${reps} reps, and ${sets} sets.`)
-        let tempAccount = findAccount(interaction.user.username, interaction.user.id)
-        let prevLvl = tempAccount.getLevel();
-        for(let i = 0; i < sets; i++){
-            tempAccount.logSet(movement, weight, reps);
-        }
-        if(tempAccount.getLevel() > prevLvl){
-            interaction.channel.send(`${interaction.user} has levelled up to level ${tempAccount.getLevel()}!`)
-        }
-        //Reply in chat (will likely change to an embed later)
-        if(sets > 1){
-            interaction.reply(`Logged ${sets} sets of ${movement} ${weight}lbs for ${reps} reps.`);
-        }else if(weight >= 1){
-            interaction.reply(`Logged ${movement} ${weight}lbs for ${reps} reps.`);
-        }else{
-            interaction.reply(`Logged ${movement} for ${reps} reps.`);
-        }
-    }
-
-    //Cardio command handling
-    if(interaction.commandName === "cardio"){
-
-    }
-
-    //History command handling
-    if(interaction.commandName === "history"){
-        let days = interaction.options.get("days")?.value ?? 3;
-        if(days <= 0){
-            interaction.reply("Invalid number of days.")
-        }else{
-            //interaction.reply(findAccount(interaction.user.username, interaction.user.id).getHistoryString(days));
-            let historyEmbeds = findAccount(interaction.user.username, interaction.user.id).getHistoryEmbeds(days);
-            interaction.reply({embeds: historyEmbeds});
-        }
-    }
-
-    //Profile command handling
-    if(interaction.commandName === "profile"){
-        const otherUser = interaction.options.get("user")?.user ?? null;
-        if(otherUser != null){
-            //interaction.reply(findAccount(otherUser.username, otherUser.id).toString());
-            //This command checks if a user has a profile or not since I want the creation date to reflect when that user actually started using the app.
-            let exists = false;
-            for(let i = 0; i < accounts.length; i++){
-                if(accounts[i].getId() == otherUser.id)
-                    exists = true;
-            }
-            if(exists)
-                interaction.reply({ embeds: [findAccount(otherUser.username, otherUser.id).getProfileEmbed(otherUser)] });
-            else
-                interaction.reply(`${otherUser.displayName} has no profile.`);
-        }else{
-            //interaction.reply(findAccount(interaction.user.username, interaction.user.id).toString());
-            interaction.reply({ embeds: [findAccount(interaction.user.username, interaction.user.id).getProfileEmbed(interaction.user)] });
-        }
-    }
-
-    //Rest Day command handling
-    if(interaction.commandName === "restday"){
-        const userAccount = findAccount(interaction.user.username, interaction.user.id);
-        let currentDays = userAccount.getRestDays();
-        let chosenDay = "";
-        switch(interaction.options.get("day").value){
-            case 0:
-                chosenDay = "Sunday";
-                break;
-            case 1:
-                chosenDay = "Monday";
-                break;
-            case 2:
-                chosenDay = "Tuesday";
-                break;
-            case 3:
-                chosenDay = "Wednesday";
-                break;
-            case 4:
-                chosenDay = "Thursday";
-                break;
-            case 5:
-                chosenDay = "Friday";
-                break;
-            case 6:
-                chosenDay = "Saturday";
-                break;
-        }
-        let removed = false;
-        for(let i = 0; i < currentDays.length; i++){
-            if(currentDays[i] == interaction.options.get("day").value){
-                currentDays.splice(i,1)
-                userAccount.setRestDays(currentDays);
-                interaction.reply(`Removed ${chosenDay} from your rest days.`);
-                removed = true;
-                break;
-            }
-        }
-        if(!removed){
-            currentDays.push(interaction.options.get("day").value)
-            userAccount.setRestDays(currentDays);
-            interaction.reply(`Added ${chosenDay} to your rest days.`);
-        }
-    }
-
-    //Bodyweight command handling
-    if(interaction.commandName === "bodyweight"){
-        let bw = interaction.options.get("weight").value;
-        findAccount(interaction.user.username, interaction.user.id).setBodyweight(bw);
-        interaction.reply(`Set your body weight to ${bw}lbs.`);
-    }
-
-    //Stats command handling
-    if(interaction.commandName === "stats"){
-        interaction.reply(findAccount(interaction.user.username, interaction.user.id).getStats(interaction.options.get("movement").value));
-    }
-
-    //Leaderboard command Handling
-    if(interaction.commandName === "leaderboard"){
-        let leaderBoardEmbed = new EmbedBuilder()
-        .setTitle(`Leaderboard`)
-        .setDescription(`Sorted by ${interaction.options.get("stat").value}`);
-        sortAccounts(interaction.options.get("stat").value);
+try{
+    client.on("ready", (c) => {
         for(let i = 0; i < accounts.length; i++){
-            switch(interaction.options.get("stat").value){
-                case "Level":
-                    leaderBoardEmbed.addFields({ name: accounts[i].getName(), value: `Level: ${accounts[i].getLevel()}` });
-                    break;
-                case "Days Skipped":
-                    leaderBoardEmbed.addFields({ name: accounts[i].getName(), value: `Days Skipped: ${accounts[i].getSkipTotal()}` });
-                    break;
-                case "Skip Streak":
-                    leaderBoardEmbed.addFields({ name: accounts[i].getName(), value: `Skip Streak: ${accounts[i].getSkipStreak()}` });
-                    break;
-                case "Days Logged":
-                    leaderBoardEmbed.addFields({ name: accounts[i].getName(), value: `Days Logged: ${accounts[i].getTotalDays()}` });
-                    break;
-                case "Cardio Total":
-                    leaderBoardEmbed.addFields({ name: accounts[i].getName(), value: `Cardio Total: ${accounts[i].getName()} minutes` });
-                    break;
-                case "Date Created":
-                    leaderBoardEmbed.addFields({ name: accounts[i].getName(), value: `Date Created: ${accounts[i].getCreationDate()}` });
-                    break;
+            fs.readdir("accounts", (err, files) => {
+                if(err)
+                    console.error(err);
+                //Because the file functions are running async the backup has to be done once the bot is ready since
+                //it ensures the accounts are all loaded in and it won't just make an empty backup.
+                //I may change this later.
+                fs.copyFile(`accounts\\${files[i]}`, `backup\\${files[i]}`, (cpyErr) => {if(cpyErr) console.error(cpyErr)});
+            });
+        }
+
+        setInterval(checkSkips, 1800000);//Checks every 6 hours
+        checkSkips();
+
+        client.user.setActivity({
+            name: "with heavy circles",
+            type: ActivityType.Playing
+        })
+        console.log(`${c.user.tag} is ready for gains.`);
+    });
+
+    //Ideally in the future this will be handled with a command handler
+    client.on("interactionCreate", (interaction) =>{
+        //Autocomplete for the giant list of exercises
+        if(interaction.isAutocomplete() && (interaction.commandName === "log" || interaction.commandName === "stats")){
+            const focused = interaction.options.getFocused();
+            const choices = ExerciseList;
+            const filtered = choices.filter(choice => choice.toLowerCase().indexOf(focused.toLowerCase()) >= 0);
+            interaction.respond(
+                filtered.slice(0,24).map(choice => ({name: choice, value: choice}))
+            );
+        }
+
+        if(!interaction.isChatInputCommand()) return;
+
+        //Help command handling
+        if(interaction.commandName === "help"){
+            interaction.reply({ embeds: [ HelpEmbed ] });
+        }
+        
+        //Log command handling
+        if(interaction.commandName === "log"){
+            let movement = interaction.options.get("movement").value;
+            let weight = interaction.options.get("weight")?.value ?? 0;
+            let reps = interaction.options.get("reps")?.value ?? 0;
+            let sets = interaction.options.get("sets")?.value ?? 1;
+            console.log(`${interaction.user.username} Logged: ${movement} ${weight} lbs, ${reps} reps, and ${sets} sets.`)
+            let tempAccount = findAccount(interaction.user.username, interaction.user.id)
+            let prevLvl = tempAccount.getLevel();
+            for(let i = 0; i < sets; i++){
+                tempAccount.logSet(movement, weight, reps);
+            }
+            if(tempAccount.getLevel() > prevLvl){
+                interaction.channel.send(`${interaction.user} has levelled up to level ${tempAccount.getLevel()}!`)
+            }
+            //Reply in chat (will likely change to an embed later)
+            if(sets > 1){
+                interaction.reply(`Logged ${sets} sets of ${movement} ${weight}lbs for ${reps} reps.`);
+            }else if(weight >= 1){
+                interaction.reply(`Logged ${movement} ${weight}lbs for ${reps} reps.`);
+            }else{
+                interaction.reply(`Logged ${movement} for ${reps} reps.`);
             }
         }
-        interaction.reply({ embeds: [leaderBoardEmbed] });
-    }
+
+        //Cardio command handling
+        if(interaction.commandName === "cardio"){
+
+        }
+
+        //History command handling
+        if(interaction.commandName === "history"){
+            let days = interaction.options.get("days")?.value ?? 1;
+            let startDate = interaction.options.get("date")?.value ?? null;
+            if(days <= 0){
+                interaction.reply("Invalid number of days.")
+            }else{
+                //interaction.reply(findAccount(interaction.user.username, interaction.user.id).getHistoryString(days));
+                let historyEmbeds = findAccount(interaction.user.username, interaction.user.id).getHistoryEmbeds(days, startDate);
+                interaction.reply({embeds: historyEmbeds});
+            }
+        }
+
+        //Profile command handling
+        if(interaction.commandName === "profile"){
+            const otherUser = interaction.options.get("user")?.user ?? null;
+            if(otherUser != null){
+                //interaction.reply(findAccount(otherUser.username, otherUser.id).toString());
+                //This command checks if a user has a profile or not since I want the creation date to reflect when that user actually started using the app.
+                let exists = false;
+                for(let i = 0; i < accounts.length; i++){
+                    if(accounts[i].getId() == otherUser.id)
+                        exists = true;
+                }
+                if(exists)
+                    interaction.reply({ embeds: [findAccount(otherUser.username, otherUser.id).getProfileEmbed(otherUser)] });
+                else
+                    interaction.reply(`${otherUser.displayName} has no profile.`);
+            }else{
+                //interaction.reply(findAccount(interaction.user.username, interaction.user.id).toString());
+                interaction.reply({ embeds: [findAccount(interaction.user.username, interaction.user.id).getProfileEmbed(interaction.user)] });
+            }
+        }
+
+        //Rest Day command handling
+        if(interaction.commandName === "restday"){
+            const userAccount = findAccount(interaction.user.username, interaction.user.id);
+            let currentDays = userAccount.getRestDays();
+            let chosenDay = "";
+            switch(interaction.options.get("day").value){
+                case 0:
+                    chosenDay = "Sunday";
+                    break;
+                case 1:
+                    chosenDay = "Monday";
+                    break;
+                case 2:
+                    chosenDay = "Tuesday";
+                    break;
+                case 3:
+                    chosenDay = "Wednesday";
+                    break;
+                case 4:
+                    chosenDay = "Thursday";
+                    break;
+                case 5:
+                    chosenDay = "Friday";
+                    break;
+                case 6:
+                    chosenDay = "Saturday";
+                    break;
+            }
+            let removed = false;
+            for(let i = 0; i < currentDays.length; i++){
+                if(currentDays[i] == interaction.options.get("day").value){
+                    currentDays.splice(i,1)
+                    userAccount.setRestDays(currentDays);
+                    interaction.reply(`Removed ${chosenDay} from your rest days.`);
+                    removed = true;
+                    break;
+                }
+            }
+            if(!removed){
+                currentDays.push(interaction.options.get("day").value)
+                userAccount.setRestDays(currentDays);
+                interaction.reply(`Added ${chosenDay} to your rest days.`);
+            }
+        }
+
+        //Bodyweight, Squat, Bench, Deadlift command handling
+        if(interaction.commandName === "bodyweight" || interaction.commandName === "squat" || interaction.commandName === "bench" || interaction.commandName === "deadlift"){
+            let weight = interaction.options.get("weight").value;
+            let type = interaction.commandName;
+            if(weight <= 0){
+                interaction.reply("Invalid weight.")
+            }else{
+                switch(type){
+                    case "bodyweight":
+                        findAccount(interaction.user.username, interaction.user.id).setBodyweight(weight);
+                        break;
+                    case "squat":
+                        findAccount(interaction.user.username, interaction.user.id).setSquat(weight);
+                        break;
+                    case "bench":
+                        findAccount(interaction.user.username, interaction.user.id).setBench(weight);
+                        break;
+                    case "deadlift":
+                        findAccount(interaction.user.username, interaction.user.id).setDeadlift(weight);
+                        break;
+                }
+                interaction.reply(`Set your ${type} to ${weight}lbs.`);
+            }
+        }
+
+        //Stats command handling
+        if(interaction.commandName === "stats"){
+            interaction.reply(findAccount(interaction.user.username, interaction.user.id).getStats(interaction.options.get("movement").value));
+        }
+
+        //Leaderboard command Handling
+        if(interaction.commandName === "leaderboard"){
+            let leaderBoardEmbed = new EmbedBuilder()
+            .setTitle(`Leaderboard`)
+            .setDescription(`Sorted by ${interaction.options.get("stat").value}`);
+            sortAccounts(interaction.options.get("stat").value);
+            for(let i = 0; i < accounts.length; i++){
+                switch(interaction.options.get("stat").value){
+                    case "Level":
+                        leaderBoardEmbed.addFields({ name: `${i + 1}. ${accounts[i].getName()}`, value: `Level: ${accounts[i].getLevel()}` });
+                        break;
+                    case "Days Skipped":
+                        leaderBoardEmbed.addFields({ name: `${i + 1}. ${accounts[i].getName()}`, value: `Days Skipped: ${accounts[i].getSkipTotal()}` });
+                        break;
+                    case "Skip Streak":
+                        leaderBoardEmbed.addFields({ name: `${i + 1}. ${accounts[i].getName()}`, value: `Skip Streak: ${accounts[i].getSkipStreak()}` });
+                        break;
+                    case "Days Logged":
+                        leaderBoardEmbed.addFields({ name: `${i + 1}. ${accounts[i].getName()}`, value: `Days Logged: ${accounts[i].getTotalDays()}` });
+                        break;
+                    case "Cardio Total":
+                        leaderBoardEmbed.addFields({ name: `${i + 1}. ${accounts[i].getName()}`, value: `Cardio Total: ${accounts[i].getName()} minutes` });
+                        break;
+                    case "Date Created":
+                        leaderBoardEmbed.addFields({ name: `${i + 1}. ${accounts[i].getName()}`, value: `Date Created: ${accounts[i].getCreationDate()}` });
+                        break;
+                    case "Powerlifting Total":
+                        leaderBoardEmbed.addFields({ name: `${i + 1}. ${accounts[i].getName()}`, value: `Total: ${accounts[i].getTotal()}` });
+                        break;
+                }
+            }
+            interaction.reply({ embeds: [leaderBoardEmbed] }); //THIS WILL BREAK, when there are more than 25 users. I'll fix it later
+        }
 
 
-})
-
+    })
+} catch(interactionError){
+    console.error(interactionError);
+}
 client.login(process.env.TOKEN);
-//client.login("MTE5NTg3MjI2NzE1MDgzNTgzNQ.GewRlR.o1mK7pxufXiXSi3HKGFjmmkFo_pBtgz4EeBQdk");

@@ -53,12 +53,17 @@ const commands = [
     },
     {
         name: "history",
-        description: "Get your history log up to 25 days",
+        description: "Get your history log up to 7 days",
         options: [
             {
                 name: "days",
                 description: "Amount of days back you want to go.",
                 type: ApplicationCommandOptionType.Integer
+            },
+            {
+                name: "date",
+                description: "Specific date you want your history on.",
+                type: ApplicationCommandOptionType.String
             }
         ]
     },
@@ -129,6 +134,42 @@ const commands = [
         ]
     },
     {
+        name: "squat",
+        description: "Save your one rep max squat record.",
+        options: [
+            {
+                name: "weight",
+                description: "Weight of your one rep max squat.",
+                type: ApplicationCommandOptionType.Number,
+                required: true
+            }
+        ]
+    },
+    {
+        name: "bench",
+        description: "Save your one rep max bench record.",
+        options: [
+            {
+                name: "weight",
+                description: "Weight of your one rep max bench.",
+                type: ApplicationCommandOptionType.Number,
+                required: true
+            }
+        ]
+    },
+    {
+        name: "deadlift",
+        description: "Save your one rep max deadlift record.",
+        options: [
+            {
+                name: "weight",
+                description: "Weight of your one rep max deadlift.",
+                type: ApplicationCommandOptionType.Number,
+                required: true
+            }
+        ]
+    },
+    {
         name: "leaderboard",
         description: "Leaderboard sorted by level by default.",
         options: [
@@ -140,10 +181,12 @@ const commands = [
                 choices: [
                     {
                         name: "Level",
+                        description: "Account level",
                         value: "Level"
                     },
                     {
                         name: "Days Skipped",
+                        description: "Total days skipped",
                         value: "Days Skipped"
                     },
                     {
@@ -152,15 +195,23 @@ const commands = [
                     },
                     {
                         name: "Days Logged",
+                        description: "Total number of days logged",
                         value: "Days Logged"
                     },
                     {
                         name: "Cardio Total",
+                        description: "Total minutes of cardio done",
                         value: "Cardio Total"
                     },
                     {
                         name: "Date Created",
+                        description: "Account creation date",
                         value: "Date Created"
+                    },
+                    {
+                        name: "Powerlifting Total",
+                        description: "Total of squat, bench, and deadlift",
+                        value: "Powerlifting Total"
                     }
                 ]
             }
@@ -188,7 +239,7 @@ const rest = new REST({version: "10"}).setToken(process.env.TOKEN);
     try{
         console.log("Registering Commands...");
 
-        await(rest.put(Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID), {body: commands}))
+        await(rest.put(Routes.applicationCommands(process.env.CLIENT_ID), {body: commands}))
 
         console.log("Commands registered successfully!");
     }catch(error){

@@ -37,14 +37,20 @@ class WorkoutDay{
         this.getTotal();
     }
 
-    getEmbed(){
-        let dayEmbed = new EmbedBuilder().setTitle(this.date);
+    getEmbeds(){
+        let dayEmbeds = [];
+        let embedNum = 0;
+        dayEmbeds[0] = new EmbedBuilder().setTitle(this.date);
         this.getTotal();
         for(let i = 0; i < this.sets.length; i++){
-            dayEmbed.addFields({ name: this.sets[i].getMovement(), value: `${this.sets[i].getWeight()}lbs for ${this.sets[i].getReps()} reps`, inline: true});
+            if((i+1) % 26 === 0){
+                embedNum++;
+                dayEmbeds.push(new EmbedBuilder().setTitle(`${this.date} Page ${embedNum + 1}`));
+            }
+            dayEmbeds[embedNum].addFields({ name: this.sets[i].getMovement(), value: `${this.sets[i].getWeight()}lbs for ${this.sets[i].getReps()} reps`, inline: true});
         }
-        dayEmbed.addFields({ name: "Total Weight", value: `${this.dayTotal}lbs`});
-        return dayEmbed;
+        dayEmbeds[embedNum].addFields({ name: "Total Weight", value: `${this.dayTotal}lbs`});
+        return dayEmbeds;
     }
 
     toString(){

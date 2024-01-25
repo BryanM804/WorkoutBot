@@ -3,7 +3,7 @@ const { EmbedBuilder } = require("discord.js");
 const WorkoutDay = require(".\\WorkoutDay.js");
 
 class Account{
-    constructor(name, id, bodyweight, level, xp, creationDate, skipTotal, skipStreak, restDays, history){
+    constructor(name, id, bodyweight, level, xp, creationDate, skipTotal, skipStreak, restDays, squat, bench, deadlift, history){
         this.name = name;
         this.id = id;
         this.bodyweight = bodyweight || 0;
@@ -13,6 +13,9 @@ class Account{
         this.skipTotal = skipTotal || 0;
         this.skipStreak = skipStreak || 0;
         this.restDays = restDays || [];
+        this.squat = squat || 0;
+        this.bench = bench || 0;
+        this.deadlift = deadlift || 0;
         //If the user has a history it converts the history it has read into WorkoutDay objects
         if(history != null && history.length > 0){
             this.history = []
@@ -38,6 +41,9 @@ class Account{
     getLevel(){
         return this.level;
     }
+    getXp(){
+        return this.xp;
+    }
     getCreationDate(){
         return this.creationDate;
     }
@@ -55,6 +61,18 @@ class Account{
     }
     getRestDays(){
         return this.restDays;
+    }
+    getSquat(){
+        return this.squat;
+    }
+    getBench(){
+        return this.bench;
+    }
+    getDeadlift(){
+        return this.deadlift;
+    }
+    getTotal(){
+        return this.squat + this.bench + this.deadlift;
     }
     getStats(movement){
         if(movement == null)
@@ -89,21 +107,32 @@ Lifetime Set Total Improvement: +${lifeTimeImprovement}
 Lifetime Total Sets: ${lifetimeCount}`;
     }
 
-    getHistoryEmbeds(days){
+    getHistoryEmbeds(days, startDate){
         if(this.history.length < 1){
             return new EmbedBuilder().setTitle("No history.");
         }
 
+        let startDay = new Date(Date.parse(startDate)).toDateString();
+        let startIndex = this.history.length;
+        for(let i = 0; i < this.history.length; i++){
+            if(this.history[i].getDate() === startDay){
+                startIndex = i + 1;
+            }
+        }
+
         let historyEmbeds = [];
         let printDays = days;
-        if(days > 25){
-            printDays = 25;
+        if(days > 7){
+            printDays = 7;
         }
         if(this.history.length < days){
             printDays = this.history.length;
         }
+
         for(let i = printDays; i >= 1; i--){
-            historyEmbeds.push(this.history[this.history.length - i].getEmbed());
+            for(let j = 0; j < this.history[startIndex - i].getEmbeds().length; j++){
+                historyEmbeds.push(this.history[startIndex - i].getEmbeds()[j]);
+            }
         }
         return historyEmbeds;
     }
@@ -153,11 +182,18 @@ Lifetime Total Sets: ${lifetimeCount}`;
             if(this.bodyweight > 0){
                 profileEmbed.addFields({ name: `Body weight:`, value: `${this.bodyweight}lbs` });
             }
-            profileEmbed
-            .addFields({ name: `Days Skipped:`, value: ` ${this.skipTotal} days` })
-            .addFields({ name: `Current Skip Streak:`, value: `${this.skipStreak} days` })
-            .addFields({ name: "Rest Days:", value: this.getRestDayString() });
-
+            profileEmbed.addFields({ name: `Days Skipped:`, value: ` ${this.skipTotal} days`, inline: true })
+            .addFields({ name: `Current Skip Streak:`, value: `${this.skipStreak} days`, inline: true })
+            .addFields({ name: "Rest Days:", value: this.getRestDayString(), inline: true });
+            if(this.squat > 0){
+                profileEmbed.addFields({ name: `Squat:`, value: `${this.squat}lbs`, inline: true });
+            }
+            if(this.bench > 0){
+                profileEmbed.addFields({ name: `Bench:`, value: `${this.bench}lbs`, inline: true });
+            }
+            if(this.deadlift > 0){
+                profileEmbed.addFields({ name: `Deadlift:`, value: `${this.deadlift}lbs`, inline: true });
+            }
         return profileEmbed;
     }
 
@@ -177,10 +213,10 @@ Lifetime Total Sets: ${lifetimeCount}`;
         }
 
         //Dumbbell exercises count for double the weight internally
-        if(movement.startsWith("Dumbbell")){
+        if(movement.indexOf("Dumbbell") >= 0 || movement.startsWith("Hammer")){
             this.xp += 100 + (2 * weight * reps);
             this.history[this.history.length - 1].getSets()[this.history[this.history.length - 1].getSets().length - 1].setSetTotal((2 * weight * reps));
-        }else if(movement.startsWith("Assisted")){
+        }else if(movement.indexOf("Assisted") >= 0){
             //If an exercise is assisted and the user has bodyweight registered this adjusts xp and total accordingly
             if(this.bodyweight > 0){
                 this.xp += 100 + ((this.bodyweight - weight) * reps);
@@ -219,9 +255,20 @@ Lifetime Total Sets: ${lifetimeCount}`;
         this.bodyweight = newBodyweight;
         this.writeInfo();
     }
-
     setRestDays(newRestDays){
         this.restDays = newRestDays;
+        this.writeInfo();
+    }
+    setSquat(newSquat){
+        this.squat = newSquat;
+        this.writeInfo();
+    }
+    setBench(newBench){
+        this.bench = newBench;
+        this.writeInfo();
+    }
+    setDeadlift(newDeadlift){
+        this.deadlift = newDeadlift;
         this.writeInfo();
     }
 
