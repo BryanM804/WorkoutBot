@@ -94,6 +94,16 @@ function checkSkips(){
     }
 }
 
+function makeBackup(){
+    for(let i = 0; i < accounts.length; i++){
+        fs.readdir("accounts", (err, files) => {
+            if(err)
+                console.error(err);
+            fs.copyFile(`accounts\\${files[i]}`, `backup\\${files[i]}`, (cpyErr) => {if(cpyErr) console.error(cpyErr)});
+        });
+    }
+}
+
 //Returns the Account from the array of accounts that matches the name and id
 function findAccount(name, id){
     for(let i = 0; i < accounts.length; i++){
@@ -152,18 +162,9 @@ function sortAccounts(sortby){
 
 try{
     client.on("ready", (c) => {
-        for(let i = 0; i < accounts.length; i++){
-            fs.readdir("accounts", (err, files) => {
-                if(err)
-                    console.error(err);
-                //Because the file functions are running async the backup has to be done once the bot is ready since
-                //it ensures the accounts are all loaded in and it won't just make an empty backup.
-                //I may change this later.
-                fs.copyFile(`accounts\\${files[i]}`, `backup\\${files[i]}`, (cpyErr) => {if(cpyErr) console.error(cpyErr)});
-            });
-        }
-
+        setInterval(makeBackup, 900000);//Backup every 3 hours
         setInterval(checkSkips, 1800000);//Checks every 6 hours
+        makeBackup();
         checkSkips();
 
         client.user.setActivity({

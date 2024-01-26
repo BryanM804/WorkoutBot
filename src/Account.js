@@ -78,33 +78,83 @@ class Account{
         if(movement == null)
             return;
 
-        let lifeTimeAvg = 0;
+        let lifetimeAvgWeight = 0;
+        let lifetimeAvgReps = 0;
+        let thirtyDayAvgWeight = 0;
+        let thirtyDayAvgReps = 0;
+        let mostWeight = 0;
+        let mostWeightDate = "";
+        let mostReps = 0;
+        let mostRepsDate = "";
+        let bestTotal = 0;
+        let bestSetDate = "";
+        let bestSetWeight = 0;
+        let bestSetReps = 0;
         let lifetimeCount = 0;
-        let lifeTimeImprovement = 0;
+        let thirtyDayCount = 0;
+        let lifetimeImprovement = 0;
         let firstOccurence = true;
         let lastOccurence;
 
-        for(let i = 0; i < this.history.length; i++){
+        for(let i = this.history.length - 1; i >= 0; i--){
             for(let j = 0; j < this.history[i].getSets().length; j++){
-                if(this.history[i].getSets()[j].getMovement() == movement){
-                    if(firstOccurence){
-                        lifeTimeImprovement = this.history[i].getSets()[j].getSetTotal();
-                        firstOccurence = false;
+                let currentSet = this.history[i].getSets()[j];
+                if(currentSet.getMovement() == movement){
+                    
+                    //if(firstOccurence){
+                    //    lifetimeImprovement = this.history[i].getSets()[j].getSetTotal();
+                    //    firstOccurence = false;
+                    //}
+                    if(i > this.history.length - 30){
+                        thirtyDayAvgWeight += currentSet.getWeight();
+                        thirtyDayAvgReps += currentSet.getReps();
+                        thirtyDayCount++;
                     }
+                    if(currentSet.getWeight() > mostWeight){
+                        mostWeight = currentSet.getWeight();
+                        mostWeightDate = this.history[i].getDate();
+                    }
+                    if(currentSet.getReps() > mostReps){
+                        mostReps = currentSet.getReps();
+                        mostRepsDate = this.history[i].getDate();
+                    }
+                    if(currentSet.getSetTotal() > bestTotal){
+                        bestTotal = currentSet.getSetTotal();
+                        bestSetWeight = currentSet.getWeight();
+                        bestSetReps = currentSet.getReps();
+                        bestSetDate = this.history[i].getDate();
+                    }
+                        
 
                     lifetimeCount++;
-                    lifeTimeAvg += this.history[i].getSets()[j].getSetTotal();
-                    lastOccurence = this.history[i].getSets()[j];
+                    lifetimeAvgWeight += currentSet.getWeight();
+                    lifetimeAvgReps += currentSet.getReps();
+
+                    //lastOccurence = this.history[i].getSets()[j];
                 }
             }
         }
-        lifeTimeImprovement = lastOccurence.getSetTotal() - lifeTimeImprovement;
-        lifeTimeAvg = lifeTimeAvg/lifetimeCount;
-
-        return `${movement}:
-Average lifetime set total: ${lifeTimeAvg}
-Lifetime Set Total Improvement: +${lifeTimeImprovement}
-Lifetime Total Sets: ${lifetimeCount}`;
+        //lifeTimeImprovement = lastOccurence.getSetTotal() - lifeTimeImprovement;
+        lifetimeAvgWeight /= lifetimeCount;
+        lifetimeAvgReps /= lifetimeCount;
+        thirtyDayAvgWeight /= thirtyDayCount;
+        thirtyDayAvgReps /= thirtyDayCount;
+        
+        if(lifetimeCount == 0){
+            return `No data logged for ${movement}`;
+        }else{
+            //Averages are rounded so they only display one decimal place
+            return `${movement}:
+30 day average weight: ${Math.round(thirtyDayAvgWeight * 10) / 10}
+30 day average reps: ${Math.round(thirtyDayAvgReps * 10) / 10}
+Lifetime average weight: ${Math.round(lifetimeAvgWeight * 10) / 10}
+Lifetime average reps: ${Math.round(lifetimeAvgReps * 10) / 10}
+Highest weight used: ${mostWeight} on ${mostWeightDate}
+Highest rep count: ${mostReps} on ${mostRepsDate}
+Best set: ${bestSetWeight}lbs x ${bestSetReps} reps = ${bestTotal} on ${bestSetDate}
+Sets in the last 30 days: ${thirtyDayCount}
+Total Sets: ${lifetimeCount}`;
+        }
     }
 
     getHistoryEmbeds(days, startDate){
