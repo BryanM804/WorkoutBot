@@ -209,6 +209,24 @@ const commands = [
                         value: "Date Created"
                     },
                     {
+                        name: "Squat",
+                        description: "Squat one rep max",
+                        value: "Squat"
+
+                    },
+                    {
+                        name: "Bench",
+                        description: "Bench one rep max",
+                        value: "Bench"
+
+                    },
+                    {
+                        name: "Deadlift",
+                        description: "Deadlift one rep max",
+                        value: "Deadlift"
+
+                    },
+                    {
                         name: "Powerlifting Total",
                         description: "Total of squat, bench, and deadlift",
                         value: "Powerlifting Total"
@@ -227,6 +245,29 @@ const commands = [
                 description: "Your body weight.",
                 type: ApplicationCommandOptionType.Number,
                 required: true
+            }
+        ]
+    },
+    {
+        name: "label",
+        description: "Set a label for the current day.",
+        options: [
+            {
+                name: "label",
+                description: "Label for the day",
+                type: ApplicationCommandOptionType.String,
+                required: true
+            }
+        ]
+    },
+    {
+        name: "undo",
+        description: "Removes the last set you logged.",
+        options: [
+            {
+                name: "sets",
+                description: "Number of sets to undo",
+                type: ApplicationCommandOptionType.Integer
             }
         ]
     }

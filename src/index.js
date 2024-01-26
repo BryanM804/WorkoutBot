@@ -153,10 +153,26 @@ function sortAccounts(sortby){
                 return Date.parse(a.getCreationDate()) - Date.parse(b.getCreationDate());
             });
             break;
+        case "Squat":
+            accounts.sort((a, b) => {
+                return b.getSquat() - a.getSquat();
+            });
+            break;
+        case "Bench":
+            accounts.sort((a, b) => {
+                return b.getBench() - a.getBench();
+            });
+            break;
+        case "Deadlift":
+            accounts.sort((a, b) => {
+                return b.getDeadlift() - a.getDeadlift();
+            });
+            break;
         case "Powerlifting Total":
             accounts.sort((a, b) => {
                 return b.getTotal() - a.getTotal();
             });
+            break;
     }
 }
 
@@ -332,6 +348,30 @@ try{
             interaction.reply(findAccount(interaction.user.username, interaction.user.id).getStats(interaction.options.get("movement").value));
         }
 
+        //Label command handling
+        if(interaction.commandName === "label"){
+            let userAccount = findAccount(interaction.user.username, interaction.user.id);
+            if(userAccount.setDayLabel(interaction.options.get("label").value)){
+                interaction.reply(`Set today's label to: ${interaction.options.get("label").value}`);
+            }else{
+                interaction.reply("No log for today, nothing to label.");
+            }
+        }
+
+        //Undo command handling
+        if(interaction.commandName === "undo"){
+            let userAccount = findAccount(interaction.user.username, interaction.user.id);
+            let removeSets = interaction.options.get("sets")?.value ?? 1;
+            if(userAccount.undoSet(removeSets)){
+                if(removeSets > 1)
+                    interaction.reply(`Successfully undid ${removeSets} sets`);
+                else
+                    interaction.reply("Successfully undid set.");
+            }else{
+                interaction.reply("No logged sets left to undo today.");
+            }
+        }
+
         //Leaderboard command Handling
         if(interaction.commandName === "leaderboard"){
             let leaderBoardEmbed = new EmbedBuilder()
@@ -357,6 +397,15 @@ try{
                         break;
                     case "Date Created":
                         leaderBoardEmbed.addFields({ name: `${i + 1}. ${accounts[i].getName()}`, value: `Date Created: ${accounts[i].getCreationDate()}` });
+                        break;
+                    case "Squat":
+                        leaderBoardEmbed.addFields({ name: `${i + 1}. ${accounts[i].getName()}`, value: `Squat: ${accounts[i].getSquat()}` });
+                        break;
+                    case "Bench":
+                        leaderBoardEmbed.addFields({ name: `${i + 1}. ${accounts[i].getName()}`, value: `Bench: ${accounts[i].getBench()}` });
+                        break;
+                    case "Deadlift":
+                        leaderBoardEmbed.addFields({ name: `${i + 1}. ${accounts[i].getName()}`, value: `Deadlift: ${accounts[i].getDeadlift()}` });
                         break;
                     case "Powerlifting Total":
                         leaderBoardEmbed.addFields({ name: `${i + 1}. ${accounts[i].getName()}`, value: `Total: ${accounts[i].getTotal()}` });

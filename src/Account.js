@@ -20,7 +20,7 @@ class Account{
         if(history != null && history.length > 0){
             this.history = []
             for(let i = 0; i < history.length; i++){
-                this.history.push(new WorkoutDay(history[i].date, history[i].sets));
+                this.history.push(new WorkoutDay(history[i].date, history[i].sets, history[i].label));
             }
         }else{
             this.history = [];
@@ -100,9 +100,9 @@ class Account{
             for(let j = 0; j < this.history[i].getSets().length; j++){
                 let currentSet = this.history[i].getSets()[j];
                 if(currentSet.getMovement() == movement){
-                    
+                    //Need a better "Improvement" calculation than difference of first and last set
                     //if(firstOccurence){
-                    //    lifetimeImprovement = this.history[i].getSets()[j].getSetTotal();
+                    //    lifetimeImprovement = currentSet.getSetTotal();
                     //    firstOccurence = false;
                     //}
                     if(i > this.history.length - 30){
@@ -130,11 +130,11 @@ class Account{
                     lifetimeAvgWeight += currentSet.getWeight();
                     lifetimeAvgReps += currentSet.getReps();
 
-                    //lastOccurence = this.history[i].getSets()[j];
+                    //lastOccurence = currentSet.getSetTotal();
                 }
             }
         }
-        //lifeTimeImprovement = lastOccurence.getSetTotal() - lifeTimeImprovement;
+        //lifetimeImprovement = lastOccurence - lifetimeImprovement;
         lifetimeAvgWeight /= lifetimeCount;
         lifetimeAvgReps /= lifetimeCount;
         thirtyDayAvgWeight /= thirtyDayCount;
@@ -157,6 +157,7 @@ Total Sets: ${lifetimeCount}`;
         }
     }
 
+    //Returns the embed(s) for all of the sets for a given (days) starting from (startDate)
     getHistoryEmbeds(days, startDate){
         if(this.history.length < 1){
             return new EmbedBuilder().setTitle("No history.");
@@ -247,6 +248,7 @@ Total Sets: ${lifetimeCount}`;
         return profileEmbed;
     }
 
+    //In the future I may update the way files are stored since as is, I forsee them getting quite large
     writeInfo(){
         fs.writeFile(this.file, JSON.stringify(this), (err) => {if(err) console.error(err)});
     }
@@ -301,6 +303,37 @@ Total Sets: ${lifetimeCount}`;
         this.writeInfo();
     }
 
+    undoSet(sets){
+        let today = new Date().toDateString();
+        if(!(this.history.length >= 1 && this.history[this.history.length - 1].getDate() === today)){
+            return false;
+        }
+
+        let removeSets = sets || 1;
+        if(removeSets <= 0)
+            removeSets = 1;
+
+        for(let i = 0; i < removeSets; i++){
+           let result = this.history[this.history.length - 1].removeSet();
+           if(result < 0){
+                this.history.pop();
+                this.writeInfo();
+                return false;
+           }else{
+                this.xp -= result + 100;
+                while(this.xp < 0){
+                    this.level--;
+                    this.xp += level * 1500;
+                }
+           }
+        }
+        if(this.history[this.history.length - 1].getSets().length == 0){
+            this.history.pop();
+        }
+        this.writeInfo();
+        return true;
+    }
+
     setBodyweight(newBodyweight){
         this.bodyweight = newBodyweight;
         this.writeInfo();
@@ -320,6 +353,16 @@ Total Sets: ${lifetimeCount}`;
     setDeadlift(newDeadlift){
         this.deadlift = newDeadlift;
         this.writeInfo();
+    }
+    setDayLabel(newLabel){
+        let today = new Date().toDateString();
+        if(this.history.length >= 1 && this.history[this.history.length - 1].getDate() === today){
+            this.history[this.history.length - 1].setLabel(newLabel);
+            this.writeInfo();
+            return true;
+        }else{
+            return false;
+        }
     }
 
     toString(){
