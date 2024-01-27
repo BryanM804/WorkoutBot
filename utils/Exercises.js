@@ -3,7 +3,8 @@ module.exports.ExerciseList = [
     "Barbell Bench Press", "Dumbbell Bench Press", "Chest Press Machine",
     "Incline Barbell Bench Press", "Incline Dumbbell Bench Press", "Incline Chest Press Machine",
     "Decline Barbell Bench Press", "Decline Dumbbell Bench Press", "Decline Chest Press Machine",
-    "Dip", "Assisted Dip",
+    "Pec Deck", "Dumbbell Chest Fly", "Cable Chest Fly", "Dip", "Assisted Dip",
+    "Cable Chest Press",
     //Shoulder
     "Barbell Shoulder Press/Military Press", "Dumbbell Shoulder Press", "Arnold Press",
     "Machine Shoulder Press", "Dumbbell Lateral Raise", "Cable Lateral Raise",
@@ -21,7 +22,8 @@ module.exports.ExerciseList = [
     "Reverse Lunge", "Hip Abduction", "Hip Adduction",
     "Calf Raise", "Cable Crunch", "Goblett Squat",
     "Barbell Back Squat", "Leg Extension", "Hamstring Curl",
-    "Lying Hamstring Curl", "Deadlift",
+    "Lying Hamstring Curl", "Deadlift", "Machine Crunch", "Ab Machine",
+    "Side Crunch",
     //Triceps
     "Tricep Pulldown", "Dip Machine",
     "Cable Overhead Tricep Extension", "Overhead Tricep Extension", "Tricep Pushdown", "Single Arm Overhead Tricep Extension",

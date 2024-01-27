@@ -141,19 +141,24 @@ class Account{
         thirtyDayAvgReps /= thirtyDayCount;
         
         if(lifetimeCount == 0){
-            return `No data logged for ${movement}`;
+            return new EmbedBuilder().setTitle(`No data logged for ${movement}`);
         }else{
             //Averages are rounded so they only display one decimal place
-            return `${movement}:
-30 day average weight: ${Math.round(thirtyDayAvgWeight * 10) / 10}
-30 day average reps: ${Math.round(thirtyDayAvgReps * 10) / 10}
-Lifetime average weight: ${Math.round(lifetimeAvgWeight * 10) / 10}
-Lifetime average reps: ${Math.round(lifetimeAvgReps * 10) / 10}
-Highest weight used: ${mostWeight} on ${mostWeightDate}
-Highest rep count: ${mostReps} on ${mostRepsDate}
-Best set: ${bestSetWeight}lbs x ${bestSetReps} reps = ${bestTotal} on ${bestSetDate}
-Sets in the last 30 days: ${thirtyDayCount}
-Total Sets: ${lifetimeCount}`;
+            let statsEmbed = new EmbedBuilder()
+            .setTitle(`${this.name}'s ${movement}`)
+            .addFields({ name: "__30 Day__", value: " " })
+            .addFields({ name: "Average Weight", value: `${Math.round(thirtyDayAvgWeight * 10) / 10}lbs`, inline: true })
+            .addFields({ name: "Average Reps", value: `${Math.round(thirtyDayAvgReps * 10) / 10}`, inline: true })
+            .addFields({ name: "__Lifetime__", value: " " })
+            .addFields({ name: "Average Weight", value: `${Math.round(lifetimeAvgWeight * 10) / 10}lbs`, inline: true })
+            .addFields({ name: "Average Reps", value: `${Math.round(lifetimeAvgReps * 10) / 10}`, inline: true })
+            .addFields({ name: "__Records__", value: " " })
+            .addFields({ name: "Most Weight", value: `${mostWeight}lbs on ${mostWeightDate}`, inline: true })
+            .addFields({ name: "Most Reps", value: `${mostReps} reps on ${mostRepsDate}`, inline: true })
+            .addFields({ name: "Best Set", value: `${bestSetWeight}lbs x ${bestSetReps} reps = ${bestTotal} on ${bestSetDate}`, inline: true })
+            .setFooter({ text: `Total Sets: ${lifetimeCount}\nSets recorded in the last 30 days: ${thirtyDayCount}`})
+
+            return statsEmbed;
         }
     }
 
@@ -228,7 +233,7 @@ Total Sets: ${lifetimeCount}`;
         let profileEmbed = new EmbedBuilder()
             .setTitle(this.name)
             .setThumbnail(user.avatarURL())
-            .setDescription(`Created ${this.creationDate}`)
+            .setFooter({ text: `Created ${this.creationDate}` })
             .addFields({ name: `Level ${this.level}`, value: `XP: ${this.xp}/${this.level * 1500}` });
             if(this.bodyweight > 0){
                 profileEmbed.addFields({ name: `Body weight:`, value: `${this.bodyweight}lbs` });
@@ -323,7 +328,7 @@ Total Sets: ${lifetimeCount}`;
                 this.xp -= result + 100;
                 while(this.xp < 0){
                     this.level--;
-                    this.xp += level * 1500;
+                    this.xp += this.level * 1500;
                 }
            }
         }

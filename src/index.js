@@ -7,7 +7,6 @@ require("dotenv").config();
 
 //To do list:
 //cardio command
-//stats for sets
 
 const client = new Client({
     intents: [
@@ -87,6 +86,7 @@ function checkSkips(){
 
             if(daysSkipped > 0){
                 while(accounts[i].getSkipStreak() != daysSkipped){
+                    console.log(`${accounts[i].getName()} Skipped.`)
                     accounts[i].skipDay();
                 }
             }
@@ -102,6 +102,7 @@ function makeBackup(){
             fs.copyFile(`accounts\\${files[i]}`, `backup\\${files[i]}`, (cpyErr) => {if(cpyErr) console.error(cpyErr)});
         });
     }
+    console.log(`Backup successful on ${new Date().toDateString()} at ${new Date().toTimeString()}`);
 }
 
 //Returns the Account from the array of accounts that matches the name and id
@@ -178,8 +179,8 @@ function sortAccounts(sortby){
 
 try{
     client.on("ready", (c) => {
-        setInterval(makeBackup, 900000);//Backup every 3 hours
-        setInterval(checkSkips, 1800000);//Checks every 6 hours
+        setInterval(makeBackup, 3600000);//Backup every 1 hour
+        setInterval(checkSkips, 900000);//Checks every 15 minutes
         makeBackup();
         checkSkips();
 
@@ -215,22 +216,26 @@ try{
             let weight = interaction.options.get("weight")?.value ?? 0;
             let reps = interaction.options.get("reps")?.value ?? 0;
             let sets = interaction.options.get("sets")?.value ?? 1;
-            console.log(`${interaction.user.username} Logged: ${movement} ${weight} lbs, ${reps} reps, and ${sets} sets.`)
-            let tempAccount = findAccount(interaction.user.username, interaction.user.id)
-            let prevLvl = tempAccount.getLevel();
-            for(let i = 0; i < sets; i++){
-                tempAccount.logSet(movement, weight, reps);
-            }
-            if(tempAccount.getLevel() > prevLvl){
-                interaction.channel.send(`${interaction.user} has levelled up to level ${tempAccount.getLevel()}!`)
-            }
-            //Reply in chat (will likely change to an embed later)
-            if(sets > 1){
-                interaction.reply(`Logged ${sets} sets of ${movement} ${weight}lbs for ${reps} reps.`);
-            }else if(weight >= 1){
-                interaction.reply(`Logged ${movement} ${weight}lbs for ${reps} reps.`);
+            if(weight > 2000 || reps > 100 || sets > 50){
+                interaction.reply("Invalid input.");
             }else{
-                interaction.reply(`Logged ${movement} for ${reps} reps.`);
+                console.log(`${interaction.user.username} Logged: ${movement} ${weight} lbs, ${reps} reps, and ${sets} sets.`)
+                let tempAccount = findAccount(interaction.user.username, interaction.user.id)
+                let prevLvl = tempAccount.getLevel();
+                for(let i = 0; i < sets; i++){
+                    tempAccount.logSet(movement, weight, reps);
+                }
+                if(tempAccount.getLevel() > prevLvl){
+                    interaction.channel.send(`${interaction.user} has leveled up to level ${tempAccount.getLevel()}!`)
+                }
+                //Reply in chat (will likely change to an embed later)
+                if(sets > 1){
+                    interaction.reply(`Logged ${sets} sets of ${movement} ${weight}lbs for ${reps} reps.`);
+                }else if(weight >= 1){
+                    interaction.reply(`Logged ${movement} ${weight}lbs for ${reps} reps.`);
+                }else{
+                    interaction.reply(`Logged ${movement} for ${reps} reps.`);
+                }
             }
         }
 
@@ -322,7 +327,7 @@ try{
         if(interaction.commandName === "bodyweight" || interaction.commandName === "squat" || interaction.commandName === "bench" || interaction.commandName === "deadlift"){
             let weight = interaction.options.get("weight").value;
             let type = interaction.commandName;
-            if(weight <= 0){
+            if(weight <= 0 || weight > 1000){
                 interaction.reply("Invalid weight.")
             }else{
                 switch(type){
@@ -345,7 +350,7 @@ try{
 
         //Stats command handling
         if(interaction.commandName === "stats"){
-            interaction.reply(findAccount(interaction.user.username, interaction.user.id).getStats(interaction.options.get("movement").value));
+            interaction.reply({ embeds: [findAccount(interaction.user.username, interaction.user.id).getStats(interaction.options.get("movement").value)] });
         }
 
         //Label command handling
@@ -378,37 +383,42 @@ try{
             .setTitle(`Leaderboard`)
             .setDescription(`Sorted by ${interaction.options.get("stat").value}`);
             sortAccounts(interaction.options.get("stat").value);
+            let number = 0;
             for(let i = 0; i < accounts.length; i++){
+                if(accounts[i].getName() == "lemonrofl"){
+                    continue;
+                }
+                number++;
                 switch(interaction.options.get("stat").value){
                     case "Level":
-                        leaderBoardEmbed.addFields({ name: `${i + 1}. ${accounts[i].getName()}`, value: `Level: ${accounts[i].getLevel()}` });
+                        leaderBoardEmbed.addFields({ name: `${number}. ${accounts[i].getName()}`, value: `Level: ${accounts[i].getLevel()}` });
                         break;
                     case "Days Skipped":
-                        leaderBoardEmbed.addFields({ name: `${i + 1}. ${accounts[i].getName()}`, value: `Days Skipped: ${accounts[i].getSkipTotal()}` });
+                        leaderBoardEmbed.addFields({ name: `${number}. ${accounts[i].getName()}`, value: `Days Skipped: ${accounts[i].getSkipTotal()}` });
                         break;
                     case "Skip Streak":
-                        leaderBoardEmbed.addFields({ name: `${i + 1}. ${accounts[i].getName()}`, value: `Skip Streak: ${accounts[i].getSkipStreak()}` });
+                        leaderBoardEmbed.addFields({ name: `${number}. ${accounts[i].getName()}`, value: `Skip Streak: ${accounts[i].getSkipStreak()}` });
                         break;
                     case "Days Logged":
-                        leaderBoardEmbed.addFields({ name: `${i + 1}. ${accounts[i].getName()}`, value: `Days Logged: ${accounts[i].getTotalDays()}` });
+                        leaderBoardEmbed.addFields({ name: `${number}. ${accounts[i].getName()}`, value: `Days Logged: ${accounts[i].getTotalDays()}` });
                         break;
                     case "Cardio Total":
-                        leaderBoardEmbed.addFields({ name: `${i + 1}. ${accounts[i].getName()}`, value: `Cardio Total: ${accounts[i].getName()} minutes` });
+                        leaderBoardEmbed.addFields({ name: `${number}. ${accounts[i].getName()}`, value: `Cardio Total: ${accounts[i].getName()} minutes` });
                         break;
                     case "Date Created":
-                        leaderBoardEmbed.addFields({ name: `${i + 1}. ${accounts[i].getName()}`, value: `Date Created: ${accounts[i].getCreationDate()}` });
+                        leaderBoardEmbed.addFields({ name: `${number}. ${accounts[i].getName()}`, value: `Date Created: ${accounts[i].getCreationDate()}` });
                         break;
                     case "Squat":
-                        leaderBoardEmbed.addFields({ name: `${i + 1}. ${accounts[i].getName()}`, value: `Squat: ${accounts[i].getSquat()}` });
+                        leaderBoardEmbed.addFields({ name: `${number}. ${accounts[i].getName()}`, value: `Squat: ${accounts[i].getSquat()}` });
                         break;
                     case "Bench":
-                        leaderBoardEmbed.addFields({ name: `${i + 1}. ${accounts[i].getName()}`, value: `Bench: ${accounts[i].getBench()}` });
+                        leaderBoardEmbed.addFields({ name: `${number}. ${accounts[i].getName()}`, value: `Bench: ${accounts[i].getBench()}` });
                         break;
                     case "Deadlift":
-                        leaderBoardEmbed.addFields({ name: `${i + 1}. ${accounts[i].getName()}`, value: `Deadlift: ${accounts[i].getDeadlift()}` });
+                        leaderBoardEmbed.addFields({ name: `${number}. ${accounts[i].getName()}`, value: `Deadlift: ${accounts[i].getDeadlift()}` });
                         break;
                     case "Powerlifting Total":
-                        leaderBoardEmbed.addFields({ name: `${i + 1}. ${accounts[i].getName()}`, value: `Total: ${accounts[i].getTotal()}` });
+                        leaderBoardEmbed.addFields({ name: `${number}. ${accounts[i].getName()}`, value: `Total: ${accounts[i].getTotal()}` });
                         break;
                 }
             }

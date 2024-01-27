@@ -73,7 +73,7 @@ class WorkoutDay{
             }
             dayEmbeds[embedNum].addFields({ name: this.sets[i].getMovement(), value: `${this.sets[i].getWeight()}lbs for ${this.sets[i].getReps()} reps`, inline: true});
         }
-        dayEmbeds[embedNum].addFields({ name: "Total Weight", value: `${this.dayTotal}lbs`});
+        dayEmbeds[embedNum].setFooter({ text: `Total Weight: ${this.dayTotal}lbs | Total Sets: ${this.sets.length}`});
         return dayEmbeds;
     }
 
