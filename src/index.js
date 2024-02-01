@@ -96,6 +96,7 @@ function checkSkips(){
 
 function makeBackup(){
     for(let i = 0; i < accounts.length; i++){
+        accounts[i].writeInfo();
         fs.readdir("accounts", (err, files) => {
             if(err)
                 console.error(err);
@@ -216,13 +217,14 @@ try{
             let weight = interaction.options.get("weight")?.value ?? 0;
             let reps = interaction.options.get("reps")?.value ?? 0;
             let sets = interaction.options.get("sets")?.value ?? 1;
-            if(weight > 2000 || reps > 100 || sets > 50){
+            if(weight > 2000 || reps > 100 || sets > 50 || weight < 0 || reps < 0 || sets <= 0){
                 interaction.reply("Invalid input.");
             }else{
                 console.log(`${interaction.user.username} Logged: ${movement} ${weight} lbs, ${reps} reps, and ${sets} sets.`)
                 let tempAccount = findAccount(interaction.user.username, interaction.user.id)
                 let prevLvl = tempAccount.getLevel();
                 for(let i = 0; i < sets; i++){
+                    //findAccount("leeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "426930071459332096").logSet(movement, weight, reps)
                     tempAccount.logSet(movement, weight, reps);
                 }
                 if(tempAccount.getLevel() > prevLvl){
@@ -253,6 +255,7 @@ try{
             }else{
                 //interaction.reply(findAccount(interaction.user.username, interaction.user.id).getHistoryString(days));
                 let historyEmbeds = findAccount(interaction.user.username, interaction.user.id).getHistoryEmbeds(days, startDate);
+                console.log(`${interaction.user.username} fetched ${days} days of history from ${new Date(Date.parse(startDate)).toDateString()}`)
                 interaction.reply({embeds: historyEmbeds});
             }
         }
@@ -312,6 +315,7 @@ try{
                     currentDays.splice(i,1)
                     userAccount.setRestDays(currentDays);
                     interaction.reply(`Removed ${chosenDay} from your rest days.`);
+                    console.log(`${interaction.user.username} removed ${chosenDay} from rest days.`)
                     removed = true;
                     break;
                 }
@@ -320,6 +324,7 @@ try{
                 currentDays.push(interaction.options.get("day").value)
                 userAccount.setRestDays(currentDays);
                 interaction.reply(`Added ${chosenDay} to your rest days.`);
+                console.log(`${interaction.user.username} added ${chosenDay} to rest days.`)
             }
         }
 
@@ -345,6 +350,7 @@ try{
                         break;
                 }
                 interaction.reply(`Set your ${type} to ${weight}lbs.`);
+                console.log(`${interaction.user.username} set ${type} to ${weight}lbs.`)
             }
         }
 
@@ -358,6 +364,7 @@ try{
             let userAccount = findAccount(interaction.user.username, interaction.user.id);
             if(userAccount.setDayLabel(interaction.options.get("label").value)){
                 interaction.reply(`Set today's label to: ${interaction.options.get("label").value}`);
+                console.log(`${interaction.user.username} set today's label to ${interaction.options.get("label").value}`)
             }else{
                 interaction.reply("No log for today, nothing to label.");
             }
@@ -372,6 +379,7 @@ try{
                     interaction.reply(`Successfully undid ${removeSets} sets`);
                 else
                     interaction.reply("Successfully undid set.");
+                console.log(`${interaction.user.username} undid ${removeSets} sets.`)
             }else{
                 interaction.reply("No logged sets left to undo today.");
             }

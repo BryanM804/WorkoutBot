@@ -146,13 +146,13 @@ class Account{
             //Averages are rounded so they only display one decimal place
             let statsEmbed = new EmbedBuilder()
             .setTitle(`${this.name}'s ${movement}`)
-            .addFields({ name: "__30 Day__", value: " " })
+            .addFields({ name: "\0", value: "**__30 Day__**" })
             .addFields({ name: "Average Weight", value: `${Math.round(thirtyDayAvgWeight * 10) / 10}lbs`, inline: true })
             .addFields({ name: "Average Reps", value: `${Math.round(thirtyDayAvgReps * 10) / 10}`, inline: true })
-            .addFields({ name: "__Lifetime__", value: " " })
+            .addFields({ name: "\0", value: "**__Lifetime__**" })
             .addFields({ name: "Average Weight", value: `${Math.round(lifetimeAvgWeight * 10) / 10}lbs`, inline: true })
             .addFields({ name: "Average Reps", value: `${Math.round(lifetimeAvgReps * 10) / 10}`, inline: true })
-            .addFields({ name: "__Records__", value: " " })
+            .addFields({ name: "\0", value: "**__Records__**" })
             .addFields({ name: "Most Weight", value: `${mostWeight}lbs on ${mostWeightDate}`, inline: true })
             .addFields({ name: "Most Reps", value: `${mostReps} reps on ${mostRepsDate}`, inline: true })
             .addFields({ name: "Best Set", value: `${bestSetWeight}lbs x ${bestSetReps} reps = ${bestTotal} on ${bestSetDate}`, inline: true })
@@ -296,7 +296,7 @@ class Account{
         while(this.xp >= this.level * 1500){
             this.xp -= (this.level * 1500);
             this.level++;
-            console.log(`${this.name} levelled up to ${this.level}`);
+            console.log(`${this.name} leveled up to ${this.level}`);
         }
         this.skipStreak = 0;
         this.writeInfo();
