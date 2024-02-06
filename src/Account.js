@@ -302,6 +302,17 @@ class Account{
         this.writeInfo();
     }
 
+    repeatSet(){
+        let today = new Date().toDateString();
+        if(this.history.length >= 1 && this.history[this.history.length - 1].getDate() === today && this.history[this.history.length - 1].getSets().length >= 1){
+            const lastSet = this.history[this.history.length - 1].getSets()[this.history[this.history.length - 1].getSets().length - 1];
+            this.logSet(lastSet.getMovement(), lastSet.getWeight(), lastSet.getReps());
+            return lastSet;
+        }else{
+            return false;
+        }
+    }
+
     skipDay(){
         this.skipTotal++;
         this.skipStreak++;

@@ -12,7 +12,7 @@ module.exports.ExerciseList = [
     //Back
     "Pull Up", "Chin Up", "Assisted Pullup",
     "Lat Pulldown", "Lat Pullover", "Single Arm Pulldown",
-    "Barbell Row", "T Bar Row", "Landmine",
+    "Barbell Row", "T Bar Row", "Landmine", "Back Extension", "Hammer Strength Machine High Row",
     "Machine Row", "Machine Pulldown", "Cable Row", "Barbell Shrug",
     "Dumbbell Shrug", "Machine Shrug", "Hammer Strength Machine Row",
     //Rear Delts
@@ -28,7 +28,8 @@ module.exports.ExerciseList = [
     //Triceps
     "Tricep Pushdown (Rope)","Tricep Pushdown (Bar)", "Dip Machine",
     "Cable Overhead Tricep Extension", "Overhead Tricep Extension", "Single Arm Overhead Tricep Extension",
-    "Tricep Machine", "Skull Crusher", "Dumbbell Skull Crusher", "Cross-Body Cable Tricep Extension",
+    "Tricep Machine", "Skull Crusher", "Dumbbell Skull Crusher", "Cross-Body Cable Tricep Extension", "Tricep Kickback",
+    "Cable Tricep Kickback", "JM Press",
     //Biceps
     "Dumbbell Bicep Curl", "Hammer Curl", "Zottman Curl",
     "Barbell Bicep Curl", "Preacher Curl", "Bicep Curl Machine", "Preacher Curl Machine",

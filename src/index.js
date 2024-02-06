@@ -224,15 +224,16 @@ try{
                 let tempAccount = findAccount(interaction.user.username, interaction.user.id)
                 let prevLvl = tempAccount.getLevel();
                 for(let i = 0; i < sets; i++){
-                    //findAccount("leeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "426930071459332096").logSet(movement, weight, reps)
                     tempAccount.logSet(movement, weight, reps);
                 }
                 if(tempAccount.getLevel() > prevLvl){
                     interaction.channel.send(`${interaction.user} has leveled up to level ${tempAccount.getLevel()}!`)
                 }
                 //Reply in chat (will likely change to an embed later)
-                if(sets > 1){
+                if(sets > 1 && weight >= 1){
                     interaction.reply(`Logged ${sets} sets of ${movement} ${weight}lbs for ${reps} reps.`);
+                }else if(sets > 1){
+                    interaction.reply(`Logged ${sets} sets of ${movement} for ${reps} reps.`);
                 }else if(weight >= 1){
                     interaction.reply(`Logged ${movement} ${weight}lbs for ${reps} reps.`);
                 }else{
@@ -382,6 +383,34 @@ try{
                 console.log(`${interaction.user.username} undid ${removeSets} sets.`)
             }else{
                 interaction.reply("No logged sets left to undo today.");
+            }
+        }
+
+        //Repeat command handling
+        if(interaction.commandName === "repeat"){
+            let userAccount = findAccount(interaction.user.username, interaction.user.id);
+            let lastSet;
+            let repeats = interaction.options.get("sets")?.value ?? 1;
+            let prevLevel = userAccount.getLevel();
+            for(let i = 0; i < repeats; i++){
+                lastSet = userAccount.repeatSet();
+            }
+
+            if(userAccount.getLevel() > prevLevel){
+                interaction.channel.send(`${interaction.user} has leveled up to level ${userAccount.getLevel()}!`);
+            }
+
+            if(lastSet){
+                if(repeats > 1 && lastSet.getWeight() >= 1)
+                    interaction.reply(`Logged ${repeats} sets of ${lastSet.getMovement()} ${lastSet.getWeight()}lbs for ${lastSet.getReps()} reps.`);
+                else if(repeats > 1)
+                    interaction.reply(`Logged ${repeats} sets of ${lastSet.getMovement()} for ${lastSet.getReps()} reps.`);
+                else if(lastSet.getWeight() >= 1)
+                    interaction.reply(`Logged ${lastSet.getMovement()} ${lastSet.getWeight()}lbs for ${lastSet.getReps()} reps.`);
+                else
+                    interaction.reply(`Logged ${lastSet.getMovement()} for ${lastSet.getReps()} reps.`);
+            }else{
+                interaction.reply("No previous set to repeat for today.");
             }
         }
 

@@ -270,6 +270,17 @@ const commands = [
                 type: ApplicationCommandOptionType.Integer
             }
         ]
+    },
+    {
+        name: "repeat",
+        description: "Log a duplicate of the last set you logged.",
+        options: [
+            {
+                name: "sets",
+                description: "Number of times to repeat.",
+                type: ApplicationCommandOptionType.Integer
+            }
+        ]
     }
 
 ];
