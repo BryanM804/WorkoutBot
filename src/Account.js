@@ -230,6 +230,7 @@ class Account{
     }
 
     getProfileEmbed(user){
+        //Needs user for the avatarURL
         let profileEmbed = new EmbedBuilder()
             .setTitle(this.name)
             .setThumbnail(user.avatarURL())
