@@ -1,6 +1,6 @@
 const Account = require(".\\Account.js");
 const { HelpEmbed } = require("./utils/Embeds.js");
-const {Client, IntentsBitField, AutocompleteInteraction, CommandInteractionOptionResolver, User, ActivityType, EmbedBuilder} = require("discord.js");
+const { Client, IntentsBitField } = require("discord.js");
 const fs = require("fs");
 const eventHandler = require(".\\handlers\\eventHandler");
 require("dotenv").config();
@@ -20,49 +20,40 @@ const client = new Client({
 eventHandler(client);
 
 //Ensuring there is a backup directory to backup accounts.
-fs.readdir("backup", (err, files) => {
-    if(err){
-        console.log(`ERROR: ${err}\nMaking new backup directory.`)
-        fs.mkdir("backup", (error) => {console.error(error)})
-    }
-});
+if (!fs.readdirSync("backup")) {
+    console.log(`ERROR: ${err}\nMaking new backup directory.`)
+    fs.mkdirSync("backup");
+}
 
 //Creating account objects for each user file when the bot starts and backing them up in case
 //the program crashes
 let accounts = []
-fs.readdir("accounts", (err, files) => {
-    if(err){
-        console.log(`ERROR: ${err}\nMaking new accounts directory.`)
-        fs.mkdir("accounts", (error) => {console.error(error)})
+const files = fs.readdirSync("accounts");
+if(!files){
+    console.log(`ERROR: ${err}\nMaking new accounts directory.`)
+    fs.mkdirSync("accounts");
+}
+
+for(let i = 0; i < files.length; i++){
+    const data = fs.readFileSync(`accounts\\${files[i]}`);
+
+    try{
+        accounts.push(new Account(JSON.parse(data).name, JSON.parse(data).id, JSON.parse(data).bodyweight, JSON.parse(data).level, JSON.parse(data).xp, JSON.parse(data).creationDate, JSON.parse(data).skipTotal, JSON.parse(data).skipStreak, JSON.parse(data).restDays, JSON.parse(data).squat, JSON.parse(data).bench, JSON.parse(data).deadlift, JSON.parse(data).history))
+    }catch(error){
+        console.error(error)
+        console.log(`File was corrupted, attempting to restore backup.`);
+        
+        const backupData = fs.readFileSync(`backup\\${files[i]}`);
+
+        try{
+            accounts.push(new Account(JSON.parse(backupData).name, JSON.parse(backupData).id, JSON.parse(backupData).bodyweight, JSON.parse(backupData).level, JSON.parse(backupData).xp, JSON.parse(backupData).creationDate, JSON.parse(backupData).skipTotal, JSON.parse(backupData).skipStreak, JSON.parse(backupData).restDays, JSON.parse(backupData).squat, JSON.parse(backupData).bench, JSON.parse(backupData).deadlift, JSON.parse(backupData).history))
+        }catch(error2){
+            console.log(`ERROR: Backup was unreadable.`);
+            console.error(error2);
+            process.exit();
+        }
     }
-    for(let i = 0; i < files.length; i++){
-        fs.readFile(`accounts\\${files[i]}`, "utf-8", (err, data) => {
-            if(err)
-                console.error(err);
-            //When I figure out a more efficient way to convert from JSON to an Account object it will go here
-            //If the program crahses the account file will be empty, this checks for that and restores the backups
-            try{
-                accounts.push(new Account(JSON.parse(data).name, JSON.parse(data).id, JSON.parse(data).bodyweight, JSON.parse(data).level, JSON.parse(data).xp, JSON.parse(data).creationDate, JSON.parse(data).skipTotal, JSON.parse(data).skipStreak, JSON.parse(data).restDays, JSON.parse(data).squat, JSON.parse(data).bench, JSON.parse(data).deadlift, JSON.parse(data).history))
-            }catch(error){
-                console.error(error)
-                console.log(`File was corrupted, attempting to restore backup.`)
-                fs.readFile(`backup\\${files[i]}`, "utf-8", (err2, backupData) =>{
-                    if(err2){
-                        console.error(err2);
-                        process.exit();
-                    }
-                    try{
-                        accounts.push(new Account(JSON.parse(backupData).name, JSON.parse(backupData).id, JSON.parse(backupData).bodyweight, JSON.parse(backupData).level, JSON.parse(backupData).xp, JSON.parse(backupData).creationDate, JSON.parse(backupData).skipTotal, JSON.parse(backupData).skipStreak, JSON.parse(backupData).restDays, JSON.parse(backupData).squat, JSON.parse(backupData).bench, JSON.parse(backupData).deadlift, JSON.parse(backupData).history))
-                    }catch(error2){
-                        console.log(`ERROR: Backup was unreadable.`);
-                        console.error(error2);
-                        process.exit();
-                    }
-                });
-            }
-        })
-    }
-})
+}
 
 //Checking if Users skipped a day
 function checkSkips(){
@@ -99,12 +90,32 @@ function checkSkips(){
 function makeBackup(){
     for(let i = 0; i < accounts.length; i++){
         accounts[i].writeInfo();
-        fs.readdir("accounts", (err, files) => {
+    }
+    fs.readdir("accounts", (err, files) => {
+        for (const file of files) {
             if(err)
                 console.error(err);
-            fs.copyFile(`accounts\\${files[i]}`, `backup\\${files[i]}`, (cpyErr) => {if(cpyErr) console.error(cpyErr)});
-        });
-    }
+
+            let currentSize, backupSize;
+            const currentFile = fs.openSync(`accounts\\${file}`);
+            const backupFile = fs.openSync(`backup\\${file}`);
+
+            if (currentFile) {
+                currentSize = fs.fstatSync(currentFile).size;
+                fs.closeSync(currentFile);
+            }
+            if (backupFile) {
+                backupSize = fs.fstatSync(backupFile).size;
+                fs.closeSync(backupFile);
+            }
+
+            if (currentSize < backupSize) {
+                console.log(`Corrupt main file detected, skipping backup for ${file}`);
+            } else {
+                fs.copyFile(`accounts\\${file}`, `backup\\${file}`, (cpyErr) => {if(cpyErr) console.error(cpyErr)});
+            }
+        }
+    });
     console.log(`Backup successful on ${new Date().toDateString()} at ${new Date().toTimeString()}`);
 }
 

@@ -12,7 +12,7 @@ module.exports = async (client, interaction) => {
         if (!commandObject) return;
 
         if (commandObject.devOnly) {
-            if (!devs.includes(interacion.member.id)) {
+            if (!devs.includes(interaction.member.id)) {
                 interaction.reply({ content: "This can only be run by developers.", ephemeral: true });
                 return;
             }

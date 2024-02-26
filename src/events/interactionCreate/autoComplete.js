@@ -1,6 +1,6 @@
 const { ExerciseList } = require("..\\..\\utils\\Exercises.js");
 module.exports = (client, interaction) => {
-    if(interaction.isAutocomplete() && (interaction.commandName === "log" || interaction.commandName === "stats")){
+    if(interaction.isAutocomplete() && (interaction.commandName === "log" || interaction.commandName === "stats" || interaction.commandName === "logzayne")){
         const focused = interaction.options.getFocused();
         const choices = ExerciseList;
         const filtered = choices.filter(choice => choice.toLowerCase().indexOf(focused.toLowerCase()) >= 0);

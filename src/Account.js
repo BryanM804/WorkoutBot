@@ -256,7 +256,8 @@ class Account{
 
     //In the future I may update the way files are stored since as is, I forsee them getting quite large
     writeInfo(){
-        fs.writeFile(this.file, JSON.stringify(this), (err) => {if(err) console.error(err)});
+        //fs.writeFile(this.file, JSON.stringify(this), (err) => {if(err) console.error(err)});
+        fs.writeFileSync(this.file, JSON.stringify(this));
     }
 
     logSet(movement, weight, reps){
@@ -267,6 +268,51 @@ class Account{
             this.history.push(new WorkoutDay(new Date().toDateString()));
             console.log("created new day");
             this.logSet(movement, weight, reps);
+            return;
+        }
+
+        //Dumbbell exercises count for double the weight internally
+        if(movement.indexOf("Dumbbell") >= 0 || movement.startsWith("Hammer")){
+            this.xp += 100 + (2 * weight * reps);
+            this.history[this.history.length - 1].getSets()[this.history[this.history.length - 1].getSets().length - 1].setSetTotal((2 * weight * reps));
+        }else if(movement.indexOf("Assisted") >= 0){
+            //If an exercise is assisted and the user has bodyweight registered this adjusts xp and total accordingly
+            if(this.bodyweight > 0){
+                this.xp += 100 + ((this.bodyweight - weight) * reps);
+                this.history[this.history.length - 1].getSets()[this.history[this.history.length - 1].getSets().length - 1].setSetTotal((this.bodyweight - weight) * reps);
+            }else{
+                this.xp += 100;
+                this.history[this.history.length - 1].getSets()[this.history[this.history.length - 1].getSets().length - 1].setSetTotal(0);
+            }
+        }else if(movement == "Pull Up" || movement == "Chin Up" || movement == "Dip"){
+            //If an exercise is a bodyweight exercise this adjusts xp and total accordingly
+            if(this.bodyweight > 0){
+                this.xp += 100 + ((this.bodyweight + weight) * reps);
+                this.history[this.history.length - 1].getSets()[this.history[this.history.length - 1].getSets().length - 1].setSetTotal((this.bodyweight + weight) * reps);
+            }else{
+                this.xp += 100;
+            }
+        }else{
+            this.xp += 100 + weight * reps;
+        }
+        while(this.xp >= this.level * 1500){
+            this.xp -= (this.level * 1500);
+            this.level++;
+            console.log(`${this.name} leveled up to ${this.level}`);
+        }
+        this.skipStreak = 0;
+        this.writeInfo();
+    }
+
+    //temp
+    logSetOnDate(date, movement, weight, reps){
+        let today = date;
+        if(this.history.length >= 1 && this.history[this.history.length - 1].getDate() === today){
+            this.history[this.history.length - 1].addSet(movement, weight, reps, (weight * reps));
+        }else{
+            this.history.push(new WorkoutDay(date));
+            console.log("created new day");
+            this.logSetOnDate(date, movement, weight, reps);
             return;
         }
 
