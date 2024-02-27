@@ -27,12 +27,14 @@ class WorkoutDay{
         return this.label;
     }
     getTotal(){
-        if(this.sets.length < 1)
-            return;
+        if (this.sets.length < 1) return;
+
         this.dayTotal = 0;
-        for(let i = 0; i < this.sets.length; i++){
+
+        for (let i = 0; i < this.sets.length; i++) {
             this.dayTotal += this.sets[i].getSetTotal();
         }
+
         return this.dayTotal;
     }
 
@@ -46,11 +48,11 @@ class WorkoutDay{
     }
 
     removeSet(){
-        if(this.sets.length > 0){
+        if (this.sets.length > 0) {
             let total = this.sets[this.sets.length - 1].getSetTotal();
             this.sets.pop();
             return total;
-        }else{
+        } else {
             return -1;
         }
     }
@@ -59,30 +61,26 @@ class WorkoutDay{
         let dayEmbeds = [];
         let embedNum = 0;
         dayEmbeds[0] = new EmbedBuilder();
-        if(this.label != ""){
+
+        if (this.label != "") {
             dayEmbeds[0].setTitle(this.label)
             .setAuthor({ name: this.date});
-        }else{
+        } else {
             dayEmbeds[0].setTitle(this.date);
         }
+
         this.getTotal();
-        for(let i = 0; i < this.sets.length; i++){
-            if((i+1) % 26 === 0){
+
+        for (let i = 0; i < this.sets.length; i++) {
+            if ((i+1) % 26 === 0) {
                 embedNum++;
                 dayEmbeds.push(new EmbedBuilder().setTitle(`${this.date} Page ${embedNum + 1}`));
             }
             dayEmbeds[embedNum].addFields({ name: this.sets[i].getMovement(), value: `${this.sets[i].getWeight()}lbs for ${this.sets[i].getReps()} reps`, inline: true});
         }
+
         dayEmbeds[embedNum].setFooter({ text: `Total Weight: ${this.dayTotal}lbs | Total Sets: ${this.sets.length}`});
         return dayEmbeds;
-    }
-
-    toString(){
-        var setsString = "";
-        for(let i = 0; i < this.sets.length; i++){
-            setsString += this.sets[i].toString()+"\n";
-        }
-        return (`${this.date}\n${setsString}Total Weight: ${this.dayTotal}`);
     }
 }
 
