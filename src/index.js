@@ -30,25 +30,25 @@ if (!fs.readdirSync("backup")) {
 let accounts = []
 
 const files = fs.readdirSync("accounts");
-if(!files){
+if (!files) {
     console.log(`ERROR: ${err}\nMaking new accounts directory.`)
     fs.mkdirSync("accounts");
 }
 
-for(let i = 0; i < files.length; i++){
+for (let i = 0; i < files.length; i++) {
     const data = fs.readFileSync(`accounts\\${files[i]}`);
 
-    try{
+    try {
         accounts.push(new Account(JSON.parse(data).name, JSON.parse(data).id, JSON.parse(data).bodyweight, JSON.parse(data).level, JSON.parse(data).xp, JSON.parse(data).creationDate, JSON.parse(data).skipTotal, JSON.parse(data).skipStreak, JSON.parse(data).restDays, JSON.parse(data).squat, JSON.parse(data).bench, JSON.parse(data).deadlift, JSON.parse(data).history))
-    }catch(error){
+    } catch (error) {
         console.error(error)
         console.log(`File was corrupted, attempting to restore backup.`);
         
         const backupData = fs.readFileSync(`backup\\${files[i]}`);
 
-        try{
+        try {
             accounts.push(new Account(JSON.parse(backupData).name, JSON.parse(backupData).id, JSON.parse(backupData).bodyweight, JSON.parse(backupData).level, JSON.parse(backupData).xp, JSON.parse(backupData).creationDate, JSON.parse(backupData).skipTotal, JSON.parse(backupData).skipStreak, JSON.parse(backupData).restDays, JSON.parse(backupData).squat, JSON.parse(backupData).bench, JSON.parse(backupData).deadlift, JSON.parse(backupData).history))
-        }catch(error2){
+        } catch (error2){
             console.log(`ERROR: Backup was unreadable.`);
             console.error(error2);
             process.exit();
@@ -58,28 +58,30 @@ for(let i = 0; i < files.length; i++){
 
 //Checking if Users skipped a day
 function checkSkips(){
-    if(new Date().getHours() >= 23){
-        for(let i = 0; i < accounts.length; i++){
-            if(accounts[i].getHistory().length < 1)
-                continue;
+    if (new Date().getHours() >= 23) {
+        for (let i = 0; i < accounts.length; i++) {
+            if (accounts[i].getHistory().length < 1) continue;
 
             const lastWorkout = new Date(accounts[i].getHistory()[accounts[i].getHistory().length - 1].getDate());
             let daysSkipped = 0;
             let tempDate = new Date(Date.parse(new Date().toDateString())); //Removing the ms from the date (possibly very foolish)
-            while(parseInt((tempDate.getTime() - lastWorkout.getTime()) / 86400000) != 0){
+
+            while (parseInt((tempDate.getTime() - lastWorkout.getTime()) / 86400000) != 0) {
                 restDay = false;
-                for(let j = 0; j < accounts[i].getRestDays().length; j++){
+
+                for (let j = 0; j < accounts[i].getRestDays().length; j++) {
                     if(tempDate.getDay() == accounts[i].getRestDays()[j]){
                         restDay = true;
                     }
                 }
+
                 tempDate.setTime(tempDate.getTime() - 86400000);
-                if(!restDay)
-                    daysSkipped++;
+
+                if(!restDay) daysSkipped++;
             }
 
-            if(daysSkipped > 0){
-                while(accounts[i].getSkipStreak() != daysSkipped){
+            if (daysSkipped > 0) {
+                while (accounts[i].getSkipStreak() != daysSkipped) {
                     console.log(`${accounts[i].getName()} Skipped.`)
                     accounts[i].skipDay();
                 }
@@ -89,9 +91,10 @@ function checkSkips(){
 }
 
 function makeBackup(){
-    for(let i = 0; i < accounts.length; i++){
+    for (let i = 0; i < accounts.length; i++) {
         accounts[i].writeInfo();
     }
+
     fs.readdir("accounts", (err, files) => {
         for (const file of files) {
             if(err)
@@ -126,8 +129,8 @@ function makeBackup(){
 
 //Returns the Account from the array of accounts that matches the name and id
 const findAccount = function(name, id, createNew = true){
-    for(let i = 0; i < accounts.length; i++){
-        if(accounts[i].getId() === id){
+    for (let i = 0; i < accounts.length; i++) {
+        if (accounts[i].getId() === id) {
             return accounts[i];
         }
     }
@@ -142,12 +145,12 @@ const findAccount = function(name, id, createNew = true){
 
 //Sorts accounts array by the type specified
 const sortAccounts = function(sortby) {
-    switch(sortby){
+    switch (sortby) {
         case "Level":
             accounts.sort((a, b) => {
-                if(a.getLevel() == b.getLevel()){
+                if (a.getLevel() == b.getLevel()) {
                     return b.getXp() - a.getXp();
-                }else{
+                } else {
                     return b.getLevel() - a.getLevel();
                 }
             });
@@ -202,14 +205,14 @@ const sortAccounts = function(sortby) {
     return accounts;
 }
 
-try{
+try {
     client.on("ready", (c) => {
         setInterval(makeBackup, 14400000);//Backup every 4 hours
         setInterval(checkSkips, 900000);//Checks every 15 minutes
         makeBackup();
         checkSkips();
     });
-} catch(interactionError){
+} catch (interactionError) {
     console.error(interactionError);
 }
 
