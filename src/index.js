@@ -28,6 +28,7 @@ if (!fs.readdirSync("backup")) {
 //Creating account objects for each user file when the bot starts and backing them up in case
 //the program crashes
 let accounts = []
+
 const files = fs.readdirSync("accounts");
 if(!files){
     console.log(`ERROR: ${err}\nMaking new accounts directory.`)
@@ -97,9 +98,13 @@ function makeBackup(){
                 console.error(err);
 
             let currentSize, backupSize;
-            const currentFile = fs.openSync(`accounts\\${file}`);
-            const backupFile = fs.openSync(`backup\\${file}`);
+            let currentFile, backupFile;
 
+            currentFile = fs.openSync(`accounts\\${file}`);
+            if (fs.existsSync(`backup\\${file}`)) {
+                backupFile = fs.openSync(`backup\\${file}`);
+            }
+            
             if (currentFile) {
                 currentSize = fs.fstatSync(currentFile).size;
                 fs.closeSync(currentFile);

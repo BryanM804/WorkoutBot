@@ -2,10 +2,10 @@ const { ApplicationCommandOptionType } = require("discord.js");
 const { findAccount } = require("../../index.js");
 
 module.exports = {
-    name: "logzayne",
-    description: "Log movements for zaynes account.",
+    name: "fixaccount",
+    description: "Log movements for someones account.",
     devOnly: true,
-    //deleted: true,
+    deleted: true,
     options: [
         {
             name: "date",
@@ -22,17 +22,17 @@ module.exports = {
         },
         {
             name: "weight",
-            description: "Amount of weight you used.",
+            description: "Weight used.",
             type: ApplicationCommandOptionType.Number
         },
         {
             name: "reps",
-            description: "Amount of reps you did.",
+            description: "Reps did.",
             type: ApplicationCommandOptionType.Integer
         },
         {
             name: "sets",
-            description: "Number of sets you did (if you are logging multiple sets at the same weight and reps.)",
+            description: "Number of sets",
             type: ApplicationCommandOptionType.Integer
         }
     ],
@@ -42,27 +42,28 @@ module.exports = {
         let weight = interaction.options.get("weight")?.value ?? 0;
         let reps = interaction.options.get("reps")?.value ?? 0;
         let sets = interaction.options.get("sets")?.value ?? 1;
+        const name = "Kyle"; // Change to name of account or whatever you want.
         if(weight > 2000 || reps > 100 || sets > 50 || weight < 0 || reps < 0 || sets <= 0){
             interaction.reply("Invalid input.");
         }else{
-            console.log(`${interaction.user.username} Logged: ${movement} ${weight} lbs, ${reps} reps, and ${sets} sets for zayne on day ${date}`);
-            let tempAccount = findAccount("leeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "426930071459332096");
+            console.log(`${interaction.user.username} Logged: ${movement} ${weight} lbs, ${reps} reps, and ${sets} sets for ${name} on day ${date}`);
+            let tempAccount = findAccount("kale_sux", "185558177629077505"); // Change these to the account you are fixing
             let prevLvl = tempAccount.getLevel();
             for(let i = 0; i < sets; i++){
                 tempAccount.logSetOnDate(date, movement, weight, reps);
             }
             if(tempAccount.getLevel() > prevLvl){
-                interaction.channel.send(`Zayne has leveled up to level ${tempAccount.getLevel()}!`)
+                interaction.channel.send(`${name} has leveled up to level ${tempAccount.getLevel()}!`)
             }
             //Reply in chat (will likely change to an embed later)
             if(sets > 1 && weight >= 1){
-                interaction.reply(`Logged ${sets} sets of ${movement} ${weight}lbs for ${reps} reps for zayne on day ${date}.`);
+                interaction.reply(`Logged ${sets} sets of ${movement} ${weight}lbs for ${reps} reps for ${name} on day ${date}.`);
             }else if(sets > 1){
-                interaction.reply(`Logged ${sets} sets of ${movement} for ${reps} reps for zayne on day ${date}.`);
+                interaction.reply(`Logged ${sets} sets of ${movement} for ${reps} reps for ${name} on day ${date}.`);
             }else if(weight >= 1){
-                interaction.reply(`Logged ${movement} ${weight}lbs for ${reps} reps for zayne on day ${date}.`);
+                interaction.reply(`Logged ${movement} ${weight}lbs for ${reps} reps for ${name} on day ${date}.`);
             }else{
-                interaction.reply(`Logged ${movement} for ${reps} reps for zayne on day ${date}.`);
+                interaction.reply(`Logged ${movement} for ${reps} reps for ${name} on day ${date}.`);
             }
         }
     }

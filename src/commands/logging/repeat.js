@@ -6,6 +6,16 @@ module.exports = {
     description: "Log a duplicate of the last set you logged.",
     options: [
         {
+            name: "reps",
+            description: "Number of reps.",
+            type: ApplicationCommandOptionType.Integer
+        },
+        {
+            name: "weight",
+            description: "Amount of weight used",
+            type: ApplicationCommandOptionType.Number
+        },
+        {
             name: "sets",
             description: "Number of times to repeat.",
             type: ApplicationCommandOptionType.Integer
@@ -14,10 +24,13 @@ module.exports = {
     callback: (client, interaction) => {
         let userAccount = findAccount(interaction.user.username, interaction.user.id);
         let lastSet;
-        let repeats = interaction.options.get("sets")?.value ?? 1;
+        const repeats = interaction.options.get("sets")?.value ?? 1;
+        const weight = interaction.options.get("weight")?.value;
+        const reps = interaction.options.get("reps")?.value;
         let prevLevel = userAccount.getLevel();
+
         for(let i = 0; i < repeats; i++){
-            lastSet = userAccount.repeatSet();
+            lastSet = userAccount.repeatSet(weight ? weight : undefined, reps ? reps : undefined);
             console.log(`${interaction.user.username} repeated last set.`);
         }
 

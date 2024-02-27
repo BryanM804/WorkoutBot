@@ -304,7 +304,7 @@ class Account{
         this.writeInfo();
     }
 
-    //temp
+    //temp for recreating profiles
     logSetOnDate(date, movement, weight, reps){
         let today = date;
         if(this.history.length >= 1 && this.history[this.history.length - 1].getDate() === today){
@@ -349,12 +349,15 @@ class Account{
         this.writeInfo();
     }
 
-    repeatSet(){
+    repeatSet(weight, reps){
         let today = new Date().toDateString();
+        let repeatWeight, repeatReps;
         if(this.history.length >= 1 && this.history[this.history.length - 1].getDate() === today && this.history[this.history.length - 1].getSets().length >= 1){
             const lastSet = this.history[this.history.length - 1].getSets()[this.history[this.history.length - 1].getSets().length - 1];
-            this.logSet(lastSet.getMovement(), lastSet.getWeight(), lastSet.getReps());
-            return lastSet;
+            repeatWeight = weight ? weight : lastSet.getWeight();
+            repeatReps = reps ? reps : lastSet.getReps();
+            this.logSet(lastSet.getMovement(), repeatWeight, repeatReps);
+            return this.history[this.history.length - 1].getSets()[this.history[this.history.length - 1].getSets().length - 1];
         }else{
             return false;
         }
