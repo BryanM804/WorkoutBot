@@ -35,5 +35,5 @@ module.exports = (client) => {
             });
             break;  
     }
-    setTimeout(this, 900000);
+    setTimeout(this, 1800000); // Every half an hour
 }
