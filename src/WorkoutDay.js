@@ -55,6 +55,18 @@ class WorkoutDay{
         }
     }
 
+    getAverageForExercise(exercise) {
+        let average, count;
+        for (const set of sets) {
+            if (set.getMovement() == exercise) {
+                average += set.getTotal();
+                count++;
+            }
+        }
+
+        return average / count;
+    }
+
     getEmbeds(){
         let dayEmbeds = [];
         let embedNum = 0;
