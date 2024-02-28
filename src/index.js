@@ -3,6 +3,7 @@ const { HelpEmbed } = require("./utils/Embeds.js");
 const { Client, IntentsBitField } = require("discord.js");
 const fs = require("fs");
 const eventHandler = require(".\\handlers\\eventHandler");
+const getAllFiles = require(".\\utils\\getAllFiles.js")
 require("dotenv").config();
 
 //To do list:
@@ -127,6 +128,15 @@ function makeBackup(){
     console.log(`Backup successful on ${new Date().toDateString()} at ${new Date().toTimeString()}`);
 }
 
+function clearGraphs() {
+    const graphs = getAllFiles(".\\src\\graphs");
+    if (graphs.length <= 0) return;
+
+    for (const graph of graphs) {
+        fs.rmSync(graph);
+    }
+}
+
 //Returns the Account from the array of accounts that matches the name and id
 const findAccount = function(name, id, createNew = true){
     for (let i = 0; i < accounts.length; i++) {
@@ -211,6 +221,7 @@ try {
         setInterval(checkSkips, 900000);//Checks every 15 minutes
         makeBackup();
         checkSkips();
+        clearGraphs();
     });
 } catch (interactionError) {
     console.error(interactionError);

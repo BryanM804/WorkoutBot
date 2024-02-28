@@ -4,7 +4,7 @@ module.exports.ExerciseList = [
     "Incline Barbell Bench Press", "Incline Dumbbell Bench Press", "Incline Chest Press Machine",
     "Decline Barbell Bench Press", "Decline Dumbbell Bench Press", "Decline Chest Press Machine",
     "Pec Deck", "Dumbbell Chest Fly", "Cable Chest Fly", "Dip", "Assisted Dip",
-    "Cable Chest Press", "Dumbbell Fly", "Smith Machine Chest Press", "Incline Smith Machine Chest Press",
+    "Cable Chest Press", "Smith Machine Chest Press", "Incline Smith Machine Chest Press",
     //Shoulder
     "Barbell Shoulder Press/Military Press", "Dumbbell Shoulder Press", "Arnold Press",
     "Machine Shoulder Press", "Dumbbell Lateral Raise", "Cable Lateral Raise",
@@ -33,5 +33,5 @@ module.exports.ExerciseList = [
     //Biceps
     "Dumbbell Bicep Curl", "Hammer Curl", "Zottman Curl",
     "Barbell Bicep Curl", "Preacher Curl", "Bicep Curl Machine", "Preacher Curl Machine",
-    "Reverse Curl", "Cable Curl", "Forearm Curl"
+    "Reverse Curl", "Cable Curl", "Forearm Curl", "Wrist Roller"
 ];

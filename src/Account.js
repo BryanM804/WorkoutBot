@@ -162,6 +162,34 @@ class Account{
         }
     }
 
+    getAverages(exercise) {
+        if (this.history.length < 1) return null;
+
+        let averages = [];
+        let total = 0;
+        let count = 0;
+
+        for (const day of this.history) {
+            for (const set of day.getSets()) {
+                if (set.getMovement() == exercise) {
+                    total += set.getSetTotal();
+                    count++;
+                }
+            }
+            if (total == 0 && count == 0) {
+                continue;
+            } else if(total == 0) {
+                averages.push(0);
+            } else {
+                averages.push(total / count);
+            }
+            count = 0;
+            total = 0;
+        }
+
+        return averages;
+    }
+
     //Returns the embed(s) for all of the sets for a given (days) starting from (startDate)
     getHistoryEmbeds(days, startDate){
         if (this.history.length < 1) {
