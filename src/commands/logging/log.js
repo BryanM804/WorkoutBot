@@ -33,26 +33,32 @@ module.exports = {
         let weight = interaction.options.get("weight")?.value ?? 0;
         let reps = interaction.options.get("reps")?.value ?? 0;
         let sets = interaction.options.get("sets")?.value ?? 1;
-        if(weight > 2000 || reps > 100 || sets > 50 || weight < 0 || reps < 0 || sets <= 0){
-            interaction.reply("Invalid input.");
-        }else{
-            console.log(`${interaction.user.username} Logged: ${movement} ${weight} lbs, ${reps} reps, and ${sets} sets.`);
+
+        if (weight > 2000 || reps > 100 || sets > 50 || weight < 0 || reps < 0 || sets <= 0) {
+            interaction.reply({ content: "Invalid input.", ephemeral: true });
+            console.log(`${interaction.user.username} tried to log ${movement} ${weight}lbs ${reps} reps for ${sets} sets.`);
+        } else {
+            console.log(`${interaction.user.username} Logged: ${movement} ${weight} lbs ${reps} reps for ${sets} sets.`);
+
             let tempAccount = findAccount(interaction.user.username, interaction.user.id)
             let prevLvl = tempAccount.getLevel();
-            for(let i = 0; i < sets; i++){
+
+            for (let i = 0; i < sets; i++) {
                 tempAccount.logSet(movement, weight, reps);
             }
-            if(tempAccount.getLevel() > prevLvl){
+
+            if (tempAccount.getLevel() > prevLvl) {
                 interaction.channel.send(`${interaction.user} has leveled up to level ${tempAccount.getLevel()}!`)
             }
+
             //Reply in chat (will likely change to an embed later)
-            if(sets > 1 && weight >= 1){
+            if (sets > 1 && weight >= 1) {
                 interaction.reply(`Logged ${sets} sets of ${movement} ${weight}lbs for ${reps} reps.`);
-            }else if(sets > 1){
+            } else if (sets > 1) {
                 interaction.reply(`Logged ${sets} sets of ${movement} for ${reps} reps.`);
-            }else if(weight >= 1){
+            } else if (weight >= 1) {
                 interaction.reply(`Logged ${movement} ${weight}lbs for ${reps} reps.`);
-            }else{
+            } else {
                 interaction.reply(`Logged ${movement} for ${reps} reps.`);
             }
         }

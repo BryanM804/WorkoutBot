@@ -14,9 +14,11 @@ module.exports = {
     ],
     callback: (client, interaction) => {
         let weight = interaction.options.get("weight").value;
-        if(weight <= 0 || weight > 1000){
-            interaction.reply("Invalid weight.")
-        }else{
+
+        if (weight <= 0 || weight > 1000) {
+            interaction.reply({ content: "Invalid weight.", ephemeral: true });
+            console.log(`${interaction.user.username} tried to set their squat to ${weight}`);
+        } else {
             findAccount(interaction.user.username, interaction.user.id).setSquat(weight);
             interaction.reply(`Set your squat to ${weight}lbs.`);
             console.log(`${interaction.user.username} set squat to ${weight}lbs.`);

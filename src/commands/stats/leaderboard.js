@@ -71,12 +71,17 @@ module.exports = {
         let leaderBoardEmbed = new EmbedBuilder()
         .setTitle(`Leaderboard`)
         .setDescription(`Sorted by ${interaction.options.get("stat").value}`);
+
         accounts = sortAccounts(interaction.options.get("stat").value);
         let number = 0;
-        for(let i = 0; i < accounts.length; i++){
-            if(accounts[i].getName() == "lemonrofl"){
+        
+        for (let i = 0; i < accounts.length; i++) {
+            if (i >= 25) break;
+
+            /*if (accounts[i].getName() == "lemonrofl") {
                 continue;
-            }
+            }*/
+            
             number++;
             switch(interaction.options.get("stat").value){
                 case "Level":
@@ -111,6 +116,8 @@ module.exports = {
                     break;
             }
         }
-        interaction.reply({ embeds: [leaderBoardEmbed] }); //THIS WILL BREAK, when there are more than 25 users. I'll fix it later
+        
+        interaction.reply({ embeds: [leaderBoardEmbed] });
+        console.log(`${interaction.user.username} fetched leaderboard sorted by ${interaction.options.get("stat").value}.`)
     }
 }

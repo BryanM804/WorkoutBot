@@ -18,7 +18,8 @@ module.exports = {
     callback: (client, interaction) => {
         const userAccount = findAccount(interaction.user.username, interaction.user.id);
         const movement = interaction.options.get("movement").value;
-        const averages = userAccount.getAverages(movement);
+        //const averages = userAccount.getAverages(movement);
+        const averages = userAccount.getAverageData(movement);
         let fileNum = 0;
 
         const files = getAllFiles(".\\src\\graphs");
@@ -30,10 +31,12 @@ module.exports = {
             }
         }
 
-        if (!generateGraph(averages, movement, fileNum)) {
-            interaction.reply("You have no history for " + movement);
+        if (!generateGraph(averages, fileNum)) {
+            interaction.reply({ content: "You have no history for " + movement, ephemeral: true });
+            console.log(`${interaction.user.username} tried to graph history for ${movement} but has none.`)
         } else {
             // Without waiting here it doesn't recognize that the file has been created yet.
+            // Should eventually figure out a way for generateGraph to tell this function when it is done.
             setTimeout(function () { sendReply(interaction, movement, fileNum) }, 500);
         }
     }
@@ -47,4 +50,5 @@ function sendReply(interaction, movement, fileNum) {
         .setImage("attachment://graph" + fileNum + ".png");
 
     interaction.reply({ embeds: [graphEmbed], files: [graph] });
+    console.log(`${interaction.user.username} graphed history of their ${movement}.`)
 }

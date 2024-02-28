@@ -19,12 +19,18 @@ module.exports = {
     callback: (client, interaction) => {
         let days = interaction.options.get("days")?.value ?? 1;
         let startDate = interaction.options.get("date")?.value ?? null;
-        if(days <= 0){
-            interaction.reply("Invalid number of days.")
-        }else{
-            //interaction.reply(findAccount(interaction.user.username, interaction.user.id).getHistoryString(days));
+
+        if (days <= 0) {
+            interaction.reply({ content: "Invalid number of days.", ephemeral: true });
+        } else {
             let historyEmbeds = findAccount(interaction.user.username, interaction.user.id).getHistoryEmbeds(days, startDate);
-            console.log(`${interaction.user.username} fetched ${days} days of history from ${new Date(Date.parse(startDate)).toDateString()}`)
+
+            if (startDate) {
+                console.log(`${interaction.user.username} fetched ${days} days of history from ${new Date(Date.parse(startDate)).toDateString()}.`);
+            } else {
+                console.log(`${interaction.user.username} fetched ${days} days of history from most recent date.`)
+            }
+
             interaction.reply({ embeds: historyEmbeds });
         }
     }

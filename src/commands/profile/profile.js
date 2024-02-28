@@ -13,17 +13,22 @@ module.exports = {
     ],
     callback: (client, interaction) => {
         const otherUser = interaction.options.get("user")?.user ?? null;
-        if(otherUser != null){
-            //This command checks if a user has a profile or not since I want the creation date to reflect when that user actually started using the app.
+
+        if (otherUser != null) {
+            // This command checks if a user has a profile or not since I want the creation date to reflect when that user actually started using the app.
             const otherAccount = findAccount(otherUser.username, otherUser.id, false);
+            
             // profile embed needs user object for the avatar URL
-            if(otherAccount != null)
+            if (otherAccount != null) {
                 interaction.reply({ embeds: [otherAccount.getProfileEmbed(otherUser)] });
-            else
+                console.log(`${interaction.user.username} fetched the profile of ${otherUser.username}.`);
+            } else {
                 interaction.reply(`${otherUser.displayName} has no profile.`);
-        }else{
-            //interaction.reply(findAccount(interaction.user.username, interaction.user.id).toString());
+                console.log(`${interaction.user.username} tried to fetch the profile of ${otherUser.username} but they have not yet created one.`)
+            }
+        } else {
             interaction.reply({ embeds: [findAccount(interaction.user.username, interaction.user.id).getProfileEmbed(interaction.user)] });
+            console.log(`${interaction.user.username} fetched their profile.`);
         }
     }
 }

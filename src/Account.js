@@ -162,6 +162,8 @@ class Account{
         }
     }
 
+    // Leaving this here in case I decide to use it for something else in the future
+    // Essentially replaced with the data version below.
     getAverages(exercise) {
         if (this.history.length < 1) return null;
 
@@ -182,6 +184,44 @@ class Account{
                 averages.push(0);
             } else {
                 averages.push(total / count);
+            }
+            count = 0;
+            total = 0;
+        }
+
+        return averages;
+    }
+
+    // Gets the averages in data form for use in graphing
+    getAverageData(exercise) {
+        if (this.history.length < 1) return null;
+
+        let averages = [];
+        let total = 0;
+        let count = 0;
+
+        for (const day of this.history) {
+            for (const set of day.getSets()) {
+                if (set.getMovement() == exercise) {
+                    total += set.getSetTotal();
+                    count++;
+                }
+            }
+            const dateString = new Date(Date.parse(day.getDate())).toLocaleDateString();
+            if (total == 0 && count == 0) {
+                continue;
+            } else if(total == 0) {
+                let average = {
+                    day: dateString,
+                    avg: 0
+                }
+                averages.push(average);
+            } else {
+                let average = {
+                    day: dateString,
+                    avg: total / count
+                }
+                averages.push(average);
             }
             count = 0;
             total = 0;

@@ -2,19 +2,19 @@ const vega = require("vega");
 const { createPNGStream } = require("canvas");
 const fs = require("fs");
 
-module.exports = (data, title, fileNum) => {
+module.exports = (data, fileNum) => {
     if (data.length < 1) return false;
 
     let tableValues = [];
 
     for (let i = 0; i < data.length; i++) {
-        tableValues.push({ "x": i + 1, "y": data[i] })
+        tableValues.push({ "x": data[i].day, "y": data[i].avg })
     }
 
     const graph = {
         "$schema": "https://vega.github.io/schema/vega/v5.json",
-        "width": 400,
-        "height": 200,
+        "width": 600,
+        "height": 400,
         "padding": 5,
         "background": "white",
         "data": [
@@ -86,7 +86,7 @@ module.exports = (data, title, fileNum) => {
     view.toCanvas().then(function(canvas) {
         const stream = canvas.createPNGStream();
         stream.pipe(out);
-        out.on("finish", () => { console.log("graph generated") })
+        out.on("finish", () => { console.log("Graph generated") });
     });
 
     return true;

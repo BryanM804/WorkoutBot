@@ -26,8 +26,7 @@ if (!fs.readdirSync("backup")) {
     fs.mkdirSync("backup");
 }
 
-//Creating account objects for each user file when the bot starts and backing them up in case
-//the program crashes
+//Creating account objects for each user file when the bot starts
 let accounts = []
 
 const files = fs.readdirSync("accounts");
@@ -91,6 +90,7 @@ function checkSkips(){
     }
 }
 
+// Makes a backup file for each account file
 function makeBackup(){
     for (let i = 0; i < accounts.length; i++) {
         accounts[i].writeInfo();
@@ -128,6 +128,7 @@ function makeBackup(){
     console.log(`Backup successful on ${new Date().toDateString()} at ${new Date().toTimeString()}`);
 }
 
+// Clears the folder of generated graphs
 function clearGraphs() {
     const graphs = getAllFiles(".\\src\\graphs");
     if (graphs.length <= 0) return;

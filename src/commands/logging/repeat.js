@@ -31,7 +31,6 @@ module.exports = {
 
         for(let i = 0; i < repeats; i++){
             lastSet = userAccount.repeatSet(weight ? weight : undefined, reps ? reps : undefined);
-            console.log(`${interaction.user.username} repeated last set.`);
         }
 
         if(userAccount.getLevel() > prevLevel){
@@ -39,16 +38,22 @@ module.exports = {
         }
 
         if(lastSet){
-            if(repeats > 1 && lastSet.getWeight() >= 1)
+            if (repeats > 1 && lastSet.getWeight() >= 1) {
                 interaction.reply(`Logged ${repeats} sets of ${lastSet.getMovement()} ${lastSet.getWeight()}lbs for ${lastSet.getReps()} reps.`);
-            else if(repeats > 1)
+                console.log(`${interaction.user.username} repeated: ${repeats} sets of ${lastSet.getMovement()} ${lastSet.getWeight()}lbs for ${lastSet.getReps()} reps.`);
+            } else if (repeats > 1) {
                 interaction.reply(`Logged ${repeats} sets of ${lastSet.getMovement()} for ${lastSet.getReps()} reps.`);
-            else if(lastSet.getWeight() >= 1)
+                console.log(`${interaction.user.username} repeated: ${repeats} sets of ${lastSet.getMovement()} for ${lastSet.getReps()} reps.`);
+            } else if (lastSet.getWeight() >= 1) {
                 interaction.reply(`Logged ${lastSet.getMovement()} ${lastSet.getWeight()}lbs for ${lastSet.getReps()} reps.`);
-            else
+                console.log(`${interaction.user.username} repeated: ${lastSet.getMovement()} ${lastSet.getWeight()}lbs for ${lastSet.getReps()} reps.`);
+            } else {
                 interaction.reply(`Logged ${lastSet.getMovement()} for ${lastSet.getReps()} reps.`);
+                console.log(`${interaction.user.username} repeated: ${lastSet.getMovement()} for ${lastSet.getReps()} reps.`);
+            }
         }else{
-            interaction.reply("No previous set to repeat for today.");
+            interaction.reply({ content: "No previous set to repeat for today.", ephemeral: true });
+            console.log(`${interaction.user.username} tried to repeat ${repeats} set(s) but has not logged one today.`);
         }
     }
 }

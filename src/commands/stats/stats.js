@@ -15,5 +15,6 @@ module.exports = {
     ],
     callback: (client, interaction) => {
         interaction.reply({ embeds: [findAccount(interaction.user.username, interaction.user.id).getStats(interaction.options.get("movement").value)] });
+        console.log(`${interaction.user.username} fetched stats for their ${interaction.options.get("movement").value}.`);
     }
 }

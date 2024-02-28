@@ -46,6 +46,7 @@ module.exports = {
         const userAccount = findAccount(interaction.user.username, interaction.user.id);
         let currentDays = userAccount.getRestDays();
         let chosenDay = "";
+
         switch(interaction.options.get("day").value){
             case 0:
                 chosenDay = "Sunday";
@@ -69,22 +70,23 @@ module.exports = {
                 chosenDay = "Saturday";
                 break;
         }
+
         let removed = false;
-        for(let i = 0; i < currentDays.length; i++){
-            if(currentDays[i] == interaction.options.get("day").value){
+        for (let i = 0; i < currentDays.length; i++) {
+            if (currentDays[i] == interaction.options.get("day").value) {
                 currentDays.splice(i,1)
                 userAccount.setRestDays(currentDays);
                 interaction.reply(`Removed ${chosenDay} from your rest days.`);
-                console.log(`${interaction.user.username} removed ${chosenDay} from rest days.`)
+                console.log(`${interaction.user.username} removed ${chosenDay} from rest days.`);
                 removed = true;
                 break;
             }
         }
-        if(!removed){
-            currentDays.push(interaction.options.get("day").value)
+        if (!removed) {
+            currentDays.push(interaction.options.get("day").value);
             userAccount.setRestDays(currentDays);
             interaction.reply(`Added ${chosenDay} to your rest days.`);
-            console.log(`${interaction.user.username} added ${chosenDay} to rest days.`)
+            console.log(`${interaction.user.username} added ${chosenDay} to rest days.`);
         }
     }
 }
