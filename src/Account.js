@@ -75,10 +75,8 @@ class Account{
         return this.squat + this.bench + this.deadlift;
     }
     getStats(movement){
-        if (movement == null) return;
+        if (movement == null || this.history.length <= 0) return;
 
-        let lifetimeAvgWeight = 0;
-        let lifetimeAvgReps = 0;
         let thirtyDayAvgWeight = 0;
         let thirtyDayAvgReps = 0;
         let mostWeight = 0;
@@ -91,20 +89,12 @@ class Account{
         let bestSetReps = 0;
         let lifetimeCount = 0;
         let thirtyDayCount = 0;
-        let lifetimeImprovement = 0;
-        let firstOccurence = true;
-        let lastOccurence;
 
         for (let i = this.history.length - 1; i >= 0; i--) {
             for (let j = 0; j < this.history[i].getSets().length; j++) {
                 let currentSet = this.history[i].getSets()[j];
 
                 if (currentSet.getMovement() == movement) {
-                    //Need a better "Improvement" calculation than difference of first and last set
-                    //if(firstOccurence){
-                    //    lifetimeImprovement = currentSet.getSetTotal();
-                    //    firstOccurence = false;
-                    //}
                     if (i > this.history.length - 30) {
                         thirtyDayAvgWeight += currentSet.getWeight();
                         thirtyDayAvgReps += currentSet.getReps();
@@ -125,18 +115,11 @@ class Account{
                         bestSetDate = this.history[i].getDate();
                     }
                         
-
                     lifetimeCount++;
-                    lifetimeAvgWeight += currentSet.getWeight();
-                    lifetimeAvgReps += currentSet.getReps();
-
-                    //lastOccurence = currentSet.getSetTotal();
                 }
             }
         }
-        //lifetimeImprovement = lastOccurence - lifetimeImprovement;
-        lifetimeAvgWeight /= lifetimeCount;
-        lifetimeAvgReps /= lifetimeCount;
+        
         thirtyDayAvgWeight /= thirtyDayCount;
         thirtyDayAvgReps /= thirtyDayCount;
         
@@ -149,9 +132,6 @@ class Account{
             .addFields({ name: "\0", value: "**__30 Day__**" })
             .addFields({ name: "Average Weight", value: `${Math.round(thirtyDayAvgWeight * 10) / 10}lbs`, inline: true })
             .addFields({ name: "Average Reps", value: `${Math.round(thirtyDayAvgReps * 10) / 10}`, inline: true })
-            .addFields({ name: "\0", value: "**__Lifetime__**" })
-            .addFields({ name: "Average Weight", value: `${Math.round(lifetimeAvgWeight * 10) / 10}lbs`, inline: true })
-            .addFields({ name: "Average Reps", value: `${Math.round(lifetimeAvgReps * 10) / 10}`, inline: true })
             .addFields({ name: "\0", value: "**__Records__**" })
             .addFields({ name: "Most Weight", value: `${mostWeight}lbs on ${mostWeightDate}`, inline: true })
             .addFields({ name: "Most Reps", value: `${mostReps} reps on ${mostRepsDate}`, inline: true })

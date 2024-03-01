@@ -76,7 +76,7 @@ module.exports = {
         let number = 0;
         
         for (let i = 0; i < accounts.length; i++) {
-            if (i >= 25) break;
+            if (i >= 25) break; // Can't have more than 25 fields in one embed
 
             /*if (accounts[i].getName() == "lemonrofl") {
                 continue;
@@ -116,7 +116,7 @@ module.exports = {
                     break;
             }
         }
-        
+
         interaction.reply({ embeds: [leaderBoardEmbed] });
         console.log(`${interaction.user.username} fetched leaderboard sorted by ${interaction.options.get("stat").value}.`)
     }

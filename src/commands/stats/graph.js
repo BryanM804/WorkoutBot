@@ -32,8 +32,8 @@ module.exports = {
         }
 
         if (!generateGraph(averages, fileNum)) {
-            interaction.reply({ content: "You have no history for " + movement, ephemeral: true });
-            console.log(`${interaction.user.username} tried to graph history for ${movement} but has none.`)
+            interaction.reply({ content: "Not enough data for " + movement, ephemeral: true });
+            console.log(`${interaction.user.username} tried to graph history for ${movement} but doesn't have enough data.`)
         } else {
             // Without waiting here it doesn't recognize that the file has been created yet.
             // Should eventually figure out a way for generateGraph to tell this function when it is done.

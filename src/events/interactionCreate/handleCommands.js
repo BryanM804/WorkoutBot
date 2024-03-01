@@ -30,6 +30,6 @@ module.exports = async (client, interaction) => {
         await commandObject.callback(client, interaction);
 
     } catch (error) {
-        console.log("Error running command: "+error);
+        console.log(`Error running ${interaction.commandName}: ${error}`);
     }
 }

@@ -22,16 +22,17 @@ module.exports.ExerciseList = [
     "Romanian Deadlift", "Bulgarian Split Squat", "Good Morning", "Lunge",
     "Reverse Lunge", "Hip Abduction", "Hip Adduction", "Hack Squat",
     "Calf Raise Machine", "Calf Raise", "Seated Calf Raise", "Cable Crunch", "Goblett Squat",
-    "Barbell Back Squat", "Leg Extension", "Hamstring Curl",
+    "Barbell Back Squat", "Barbell Front Squat", "Leg Extension", "Hamstring Curl",
     "Lying Hamstring Curl", "Deadlift", "Machine Crunch", "Ab Machine",
-    "Side Crunch", "Sissy Squat", "Leg Press",
+    "Side Crunch", "Sissy Squat", "Leg Press", "Machine Hip Thrust",
+    "Barbell Hip Thrust", "Smith Machine Hip Thrust", "V Squat", "Reverse V Squat",
     //Triceps
     "Tricep Pushdown (Rope)","Tricep Pushdown (Bar)", "Dip Machine",
     "Cable Overhead Tricep Extension", "Overhead Tricep Extension", "Single Arm Overhead Tricep Extension",
     "Tricep Machine", "Skull Crusher", "Dumbbell Skull Crusher", "Cross-Body Cable Tricep Extension", "Tricep Kickback",
-    "Cable Tricep Kickback", "JM Press",
+    "Cable Tricep Kickback", "JM Press", "Close Grip Bench Press",
     //Biceps
     "Dumbbell Bicep Curl", "Hammer Curl", "Zottman Curl",
     "Barbell Bicep Curl", "Preacher Curl", "Bicep Curl Machine", "Preacher Curl Machine",
-    "Reverse Curl", "Cable Curl", "Forearm Curl", "Wrist Roller"
+    "Reverse Curl", "Cable Curl", "Forearm Curl", "Wrist Roller", "Dumbbell Preacher Curl"
 ];

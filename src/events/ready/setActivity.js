@@ -8,7 +8,7 @@ module.exports = (client) => {
 }
 
 function setRandomActivity() {
-    let random = Math.floor((Math.random() * 5) + 1)
+    let random = Math.floor((Math.random() * 6) + 1)
     
     switch (random) {
         case 1:
@@ -38,6 +38,12 @@ function setRandomActivity() {
         case 5:
             botClient.user.setActivity({
                 name: "Back to Me by Kanye West",
+                type: ActivityType.Listening
+            });
+            break;
+        case 6:
+            botClient.user.setActivity({
+                name: "The Bottom 2",
                 type: ActivityType.Listening
             });
             break;
