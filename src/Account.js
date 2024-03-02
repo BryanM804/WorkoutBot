@@ -443,47 +443,8 @@ class Account{
         });
     }
 
-    getName(){
-        return this.name;
-    }
-    getId(){
-        return this.id;
-    }
-    getBodyweight(){
-        return this.bodyweight;
-    }
-    getLevel(){
-        return this.level;
-    }
-    getXp(){
-        return this.xp;
-    }
-    getCreationDate(){
-        return this.creationDate;
-    }
-    getHistory(){
-        return this.history;
-    }
-    getSkipTotal(){
-        return this.skipTotal;
-    }
-    getSkipStreak(){
-        return this.skipStreak;
-    }
     getTotalDays(){
         return this.history.length;
-    }
-    getRestDays(){
-        return this.restDays;
-    }
-    getSquat(){
-        return this.squat;
-    }
-    getBench(){
-        return this.bench;
-    }
-    getDeadlift(){
-        return this.deadlift;
     }
     getTotal(){
         return this.squat + this.bench + this.deadlift;

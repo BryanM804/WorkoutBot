@@ -44,7 +44,7 @@ module.exports = {
     ],
     callback: (client, interaction) => {
         const userAccount = findAccount(interaction.user.username, interaction.user.id);
-        let currentDays = userAccount.getRestDays();
+        let currentDays = userAccount.restDays;
         let chosenDay = "";
 
         switch(interaction.options.get("day").value){

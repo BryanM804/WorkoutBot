@@ -41,12 +41,12 @@ module.exports = {
             console.log(`${interaction.user.username} Logged: ${movement} ${weight} lbs ${reps} reps for ${sets} sets.`);
 
             let tempAccount = findAccount(interaction.user.username, interaction.user.id)
-            let prevLvl = tempAccount.getLevel();
+            let prevLvl = tempAccount.level;
 
             for (let i = 0; i < sets; i++) {
                 tempAccount.logSet(movement, weight, reps, () => {
-                    if (tempAccount.getLevel() > prevLvl) {
-                        interaction.channel.send(`${interaction.user} has leveled up to level ${tempAccount.getLevel()}!`);
+                    if (tempAccount.level > prevLvl) {
+                        interaction.channel.send(`${interaction.user} has leveled up to level ${tempAccount.level}!`);
                     }
                 });
             }

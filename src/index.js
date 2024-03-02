@@ -92,7 +92,7 @@ function clearGraphs() {
 //Returns the Account from the array of accounts that matches the name and id
 const findAccount = function(name, id, createNew = true){
     for (let i = 0; i < accounts.length; i++) {
-        if (accounts[i].getId() === id) {
+        if (accounts[i].id === id) {
             return accounts[i];
         }
     }
@@ -109,21 +109,21 @@ const sortAccounts = function(sortby) {
     switch (sortby) {
         case "Level":
             accounts.sort((a, b) => {
-                if (a.getLevel() == b.getLevel()) {
-                    return b.getXp() - a.getXp();
+                if (a.level == b.level) {
+                    return b.xp - a.xp;
                 } else {
-                    return b.getLevel() - a.getLevel();
+                    return b.level - a.level;
                 }
             });
             break;
         case "Days Skipped":
             accounts.sort((a, b) => {
-                return b.getSkipTotal() - a.getSkipTotal();
+                return b.skipTotal - a.skipTotal;
             });
             break;
         case "Skip Streak":
             accounts.sort((a, b) => {
-                return b.getSkipStreak() - a.getSkipStreak();
+                return b.skipStreak - a.skipStreak;
             });
             break;
         case "Days Logged":
@@ -133,27 +133,27 @@ const sortAccounts = function(sortby) {
             break;
         case "Cardio Total":
             accounts.sort((a, b) => {
-                return b.getLevel() - a.getLevel(); //Change to cardio later
+                return b.level - a.level; //Change to cardio later
             });
             break;
         case "Date Created":
             accounts.sort((a, b) => {
-                return Date.parse(a.getCreationDate()) - Date.parse(b.getCreationDate());
+                return Date.parse(a.creationDate) - Date.parse(b.creationDate);
             });
             break;
         case "Squat":
             accounts.sort((a, b) => {
-                return b.getSquat() - a.getSquat();
+                return b.squat - a.squat;
             });
             break;
         case "Bench":
             accounts.sort((a, b) => {
-                return b.getBench() - a.getBench();
+                return b.bench - a.bench;
             });
             break;
         case "Deadlift":
             accounts.sort((a, b) => {
-                return b.getDeadlift() - a.getDeadlift();
+                return b.deadlift - a.deadlift;
             });
             break;
         case "Powerlifting Total":

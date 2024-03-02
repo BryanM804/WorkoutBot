@@ -85,34 +85,34 @@ module.exports = {
             number++;
             switch(interaction.options.get("stat").value){
                 case "Level":
-                    leaderBoardEmbed.addFields({ name: `${number}. ${accounts[i].getName()}`, value: `Level: ${accounts[i].getLevel()}` });
+                    leaderBoardEmbed.addFields({ name: `${number}. ${accounts[i].name}`, value: `Level: ${accounts[i].level}` });
                     break;
                 case "Days Skipped":
-                    leaderBoardEmbed.addFields({ name: `${number}. ${accounts[i].getName()}`, value: `Days Skipped: ${accounts[i].getSkipTotal()}` });
+                    leaderBoardEmbed.addFields({ name: `${number}. ${accounts[i].name}`, value: `Days Skipped: ${accounts[i].skipTotal}` });
                     break;
                 case "Skip Streak":
-                    leaderBoardEmbed.addFields({ name: `${number}. ${accounts[i].getName()}`, value: `Skip Streak: ${accounts[i].getSkipStreak()}` });
+                    leaderBoardEmbed.addFields({ name: `${number}. ${accounts[i].name}`, value: `Skip Streak: ${accounts[i].skipStreak}` });
                     break;
                 case "Days Logged":
-                    leaderBoardEmbed.addFields({ name: `${number}. ${accounts[i].getName()}`, value: `Days Logged: ${accounts[i].getTotalDays()}` });
+                    leaderBoardEmbed.addFields({ name: `${number}. ${accounts[i].name}`, value: `Days Logged: ${accounts[i].getTotalDays()}` });
                     break;
                 case "Cardio Total":
-                    leaderBoardEmbed.addFields({ name: `${number}. ${accounts[i].getName()}`, value: `Cardio Total: ${accounts[i].getName()} minutes` });
+                    leaderBoardEmbed.addFields({ name: `${number}. ${accounts[i].name}`, value: `Cardio Total: ${accounts[i].name} minutes` });
                     break;
                 case "Date Created":
-                    leaderBoardEmbed.addFields({ name: `${number}. ${accounts[i].getName()}`, value: `Date Created: ${accounts[i].getCreationDate()}` });
+                    leaderBoardEmbed.addFields({ name: `${number}. ${accounts[i].name}`, value: `Date Created: ${accounts[i].creationDate}` });
                     break;
                 case "Squat":
-                    leaderBoardEmbed.addFields({ name: `${number}. ${accounts[i].getName()}`, value: `Squat: ${accounts[i].getSquat()}` });
+                    leaderBoardEmbed.addFields({ name: `${number}. ${accounts[i].name}`, value: `Squat: ${accounts[i].squat}` });
                     break;
                 case "Bench":
-                    leaderBoardEmbed.addFields({ name: `${number}. ${accounts[i].getName()}`, value: `Bench: ${accounts[i].getBench()}` });
+                    leaderBoardEmbed.addFields({ name: `${number}. ${accounts[i].name}`, value: `Bench: ${accounts[i].bench}` });
                     break;
                 case "Deadlift":
-                    leaderBoardEmbed.addFields({ name: `${number}. ${accounts[i].getName()}`, value: `Deadlift: ${accounts[i].getDeadlift()}` });
+                    leaderBoardEmbed.addFields({ name: `${number}. ${accounts[i].name}`, value: `Deadlift: ${accounts[i].deadlift}` });
                     break;
                 case "Powerlifting Total":
-                    leaderBoardEmbed.addFields({ name: `${number}. ${accounts[i].getName()}`, value: `Total: ${accounts[i].getTotal()}` });
+                    leaderBoardEmbed.addFields({ name: `${number}. ${accounts[i].name}`, value: `Total: ${accounts[i].getTotal()}` });
                     break;
             }
         }
