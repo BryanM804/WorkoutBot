@@ -2,8 +2,11 @@ const vega = require("vega");
 const { createPNGStream } = require("canvas");
 const fs = require("fs");
 
-module.exports = (data, fileNum) => {
-    if (data.length < 1) return false;
+module.exports = (data, fileNum, callback) => {
+    if (data.length < 1) {
+        if (callback) callback(false);
+        return;
+    }
 
     let tableValues = [];
 
@@ -86,7 +89,10 @@ module.exports = (data, fileNum) => {
     view.toCanvas().then(function(canvas) {
         const stream = canvas.createPNGStream();
         stream.pipe(out);
-        out.on("finish", () => { console.log("Graph generated") });
+        out.on("finish", () => { 
+            console.log("Graph generated") ;
+            if (callback) callback(true);
+        });
     });
 
     return true;

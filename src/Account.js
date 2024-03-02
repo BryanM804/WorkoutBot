@@ -10,7 +10,6 @@ class Account{
     constructor(name, id){
         this.name = name;
         this.id = id;
-        //this.restDays = restDays || [];
         this.getStatsFromDB(true);
     }
 
@@ -40,18 +39,7 @@ class Account{
                 } else {
                     // Make a new account in the db
                     con.query(`INSERT INTO accounts (id, name, bodyweight, level, xp, creationDate, skiptotal, skipstreak, squat, bench, deadlift, currentsetnumber) VALUES (
-                        '${this.id}',
-                        '${this.name}',
-                        0,
-                        1,
-                        0,
-                        '${new Date().toDateString()}',
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        1)`, (err2, result) => {
+                        '${this.id}', '${this.name}', 0, 1, 0, '${new Date().toDateString()}', 0, 0, 0, 0, 0, 1)`, (err2, result) => {
                             if (err2) console.log(`Query error creating account: ${err2}`);
                             if (callback) callback(false);
                         })
@@ -189,41 +177,46 @@ class Account{
     }
 
     // Gets the averages in data form for use in graphing
-    getAverageData(exercise) {
-        if (this.history.length < 1) return null;
+    getAverageData(exercise, callback) {
 
         let averages = [];
         let total = 0;
         let count = 0;
 
-        for (const day of this.history) {
-            for (const set of day.getSets()) {
-                if (set.getMovement() == exercise) {
-                    total += set.getSetTotal();
-                    count++;
+        con.connect((err) => {
+            if (err) console.log(`Connection error getting avgs: ${err}`);
+
+            // If this originated as a database I could have sorted by setid but that is all messed up.
+            con.query(`SELECT * FROM lifts WHERE userID = '${this.id}' AND movement = '${exercise}' ORDER BY setnumber ASC`, (err2, sets) => {
+                if (err2) console.log(`Querying error getting avgs: ${err2}`);
+
+                let currDate = sets[0].date;
+                for (let set of sets) {
+                    if (set.date == currDate) {
+                        total += new Set(set.movement, set.weight, set.reps).getSetTotal();
+                        count++;
+                    } else {
+                        let average = {
+                            day: new Date(Date.parse(currDate)).toLocaleDateString(),
+                            avg: total / count
+                        }
+                        averages.push(average);
+
+                        currDate = set.date;
+                        total = new Set(set.movement, set.weight, set.reps).getSetTotal();
+                        count = 1;
+                    }
                 }
-            }
-            const dateString = new Date(Date.parse(day.getDate())).toLocaleDateString();
-            if (total == 0 && count == 0) {
-                continue;
-            } else if(total == 0) {
+                // Adding most recent average
                 let average = {
-                    day: dateString,
-                    avg: 0
-                }
-                averages.push(average);
-            } else {
-                let average = {
-                    day: dateString,
+                    day: new Date(Date.parse(currDate)).toLocaleDateString(),
                     avg: total / count
                 }
                 averages.push(average);
-            }
-            count = 0;
-            total = 0;
-        }
 
-        return averages;
+                if (callback) callback(averages);
+            });
+        })
     }
 
     //Returns the embed(s) for all of the sets for a given (days) starting from (startDate)
@@ -246,8 +239,6 @@ class Account{
 
             for (let i = days - 1; i >= 0; i--) {
                 let date = new Date(Date.parse(startDay) - (86400000 * i)).toDateString();
-
-                console.log(date);
 
                 con.query(`SELECT * FROM lifts WHERE userID = '${this.id}' AND date = '${date}';`, (err2, results) => {
                     if (err2) console.log(`Error reading data for history: ${err2}`);
