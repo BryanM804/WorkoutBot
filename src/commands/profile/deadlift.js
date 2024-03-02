@@ -4,7 +4,6 @@ const { findAccount } = require("..\\..\\index.js");
 module.exports = {
     name: "deadlift",
     description: "Save your one rep max deadlift record.",
-    deleted: true,
     options: [
         {
             name: "weight",

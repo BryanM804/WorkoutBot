@@ -39,7 +39,7 @@ class Set{
         return this.reps;
     }
     getSetTotal(){
-        return getXPAmount(this.movement, this.weight, this.reps, this.bodyweight) - 100;
+        return Set.getXPAmount(this.movement, this.weight, this.reps, this.bodyweight) - 100;
     }
 
     toString(){

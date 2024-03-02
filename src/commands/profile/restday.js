@@ -4,7 +4,6 @@ const { findAccount } = require("..\\..\\index.js");
 module.exports = {
     name: "restday",
     description: "Save/unsave your programmed rest days so they don't count as skips.",
-    deleted: true,
     options: [
         {
             name: "day",
@@ -74,7 +73,7 @@ module.exports = {
 
         let removed = false;
         for (let i = 0; i < currentDays.length; i++) {
-            if (currentDays[i] == interaction.options.get("day").value) {
+            if (parseInt(currentDays[i]) == interaction.options.get("day").value) {
                 currentDays.splice(i,1)
                 userAccount.setRestDays(currentDays);
                 interaction.reply(`Removed ${chosenDay} from your rest days.`);

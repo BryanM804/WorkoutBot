@@ -69,21 +69,20 @@ class WorkoutDay{
         return average / count;
     }
 
-    static getEmbeds(sets){
+    static getEmbeds(sets, label){
         if (sets.length < 1) return;
         
         let dayEmbeds = [];
         let embedNum = 0;
+        let total = 0;
         dayEmbeds[0] = new EmbedBuilder();
 
-        //if (this.label != "") {
-        //    dayEmbeds[0].setTitle(this.label)
-        //    .setAuthor({ name: this.date});
-        //} else {
+        if (label) {
+            dayEmbeds[0].setTitle(label)
+            .setAuthor({ name: sets[0].date});
+        } else {
             dayEmbeds[0].setTitle(sets[0].date);
-        //}
-
-        //this.getTotal();
+        }
 
         for (let i = 0; i < sets.length; i++) {
             if ((i+1) % 26 === 0) {
@@ -91,9 +90,10 @@ class WorkoutDay{
                 dayEmbeds.push(new EmbedBuilder().setTitle(`${sets[0].date} Page ${embedNum + 1}`));
             }
             dayEmbeds[embedNum].addFields({ name: sets[i].movement, value: `${sets[i].weight}lbs for ${sets[i].reps} reps`, inline: true});
+            total += new Set(sets[i].movement, sets[i].weight, sets[i].reps).getSetTotal();
         }
 
-        dayEmbeds[embedNum].setFooter({ text: `Total Weight: ${0}lbs | Total Sets: ${sets.length}`});
+        dayEmbeds[embedNum].setFooter({ text: `Total Weight: ${total}lbs | Total Sets: ${sets.length}`});
         return dayEmbeds;
     }
 }

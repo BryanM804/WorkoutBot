@@ -10,54 +10,52 @@ class Account{
     constructor(name, id){
         this.name = name;
         this.id = id;
-        //this.bodyweight = bodyweight || 0;
-        //this.level = level || 1;
-        //this.xp = xp || 0;
-        //this.creationDate = creationDate || new Date().toDateString();
-        //this.skipTotal = skipTotal || 0;
-        //this.skipStreak = skipStreak || 0;
         //this.restDays = restDays || [];
-        //this.squat = squat || 0;
-        //this.bench = bench || 0;
-        //this.deadlift = deadlift || 0;
-        //If the user has a history it converts the history it has read into WorkoutDay objects
-        /*if (history != null && history.length > 0) {
-            this.history = []
-            for (let i = 0; i < history.length; i++) {
-                this.history.push(new WorkoutDay(history[i].date, history[i].sets, history[i].label));
-            }
-        } else {
-            this.history = [];
-        }*/
-        //this.file = `accounts\\${name}.json`;
-        //this.writeInfo();
         this.getStatsFromDB(true);
     }
 
     getStatsFromDB(logInfo = false, callback) {
         con.connect((err) => {
-            if (err) console.log(`Connection error: ${err}`);
+            if (err) console.log(`Connection error getting stats: ${err}`);
 
             con.query(`SELECT * FROM accounts WHERE id = '${this.id}'`, (err2, result) => {
-                if (err2) console.log(`Query error: ${err2}`);
+                if (err2) console.log(`Query error getting stats: ${err2}`);
                 if (result.length > 0) {
                     const profile = result[0];
                     this.bodyweight = profile.bodyweight;
                     this.level = profile.level;
                     this.xp = profile.xp;
-                    this.creationDate = profile.creationtate;
+                    this.creationDate = profile.creationdate;
                     this.skipTotal = profile.skiptotal;
                     this.skipStreak = profile.skipstreak;
+                    this.restDays = profile.restdays ? profile.restdays.split(" ") : [];
                     this.squat = profile.squat;
                     this.bench = profile.bench;
                     this.deadlift = profile.deadlift;
                     this.currentSetNumber = profile.currentsetnumber;
 
+                    if (this.restDays.length > 0) this.restDays.pop(); // Split leaves a '' in the array
+
                     if (callback) callback(true);
                 } else {
-                    //con.query(`INSERT INTO accounts (id, name, bodyweight, level, xp, creationDate)`)
+                    // Make a new account in the db
+                    con.query(`INSERT INTO accounts (id, name, bodyweight, level, xp, creationDate, skiptotal, skipstreak, squat, bench, deadlift, currentsetnumber) VALUES (
+                        '${this.id}',
+                        '${this.name}',
+                        0,
+                        1,
+                        0,
+                        '${new Date().toDateString()}',
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        1)`, (err2, result) => {
+                            if (err2) console.log(`Query error creating account: ${err2}`);
+                            if (callback) callback(false);
+                        })
                 }
-
                 if (logInfo) console.log(result[0]);
             });
         })
@@ -67,12 +65,18 @@ class Account{
         con.connect((err) => {
             if (err) console.log(`Connection error: ${err}`);
 
+            let restDaysString = "";
+            for (let i = 0; i < this.restDays.length; i++) {
+                restDaysString += parseInt(this.restDays[i]) + " ";
+            }
+
             con.query(`UPDATE accounts SET 
             bodyweight = ${this.bodyweight},
             level = ${this.level},
             xp = ${this.xp},
             skiptotal = ${this.skipTotal},
             skipstreak = ${this.skipStreak},
+            restdays = '${restDaysString}',
             squat = ${this.squat},
             bench = ${this.bench},
             deadlift = ${this.deadlift},
@@ -85,52 +89,6 @@ class Account{
                 if (callback) callback();
             })
         })
-    }
-
-    getName(){
-        return this.name;
-    }
-    getId(){
-        return this.id;
-    }
-    getBodyweight(){
-        return this.bodyweight;
-    }
-    getLevel(){
-        return this.level;
-    }
-    getXp(){
-        return this.xp;
-    }
-    getCreationDate(){
-        return this.creationDate;
-    }
-    getHistory(){
-        return this.history;
-    }
-    getSkipTotal(){
-        return this.skipTotal;
-    }
-    getSkipStreak(){
-        return this.skipStreak;
-    }
-    getTotalDays(){
-        return this.history.length;
-    }
-    getRestDays(){
-        return this.restDays;
-    }
-    getSquat(){
-        return this.squat;
-    }
-    getBench(){
-        return this.bench;
-    }
-    getDeadlift(){
-        return this.deadlift;
-    }
-    getTotal(){
-        return this.squat + this.bench + this.deadlift;
     }
     getStats(movement){
         if (movement == null || this.history.length <= 0) return;
@@ -271,6 +229,8 @@ class Account{
     //Returns the embed(s) for all of the sets for a given (days) starting from (startDate)
     getHistoryEmbeds(days, startDate, callback){
         let startDay;
+        let printDays = days;
+
         if (startDate) {
             startDay = new Date(Date.parse(startDate)).toDateString();
         } else {
@@ -284,34 +244,33 @@ class Account{
              con.query(`SELECT * FROM lifts WHERE userID = '${this.id}' AND date = '${startDay}';`, (err2, results) => {
                 if (err2) console.log(`Error reading data for history: ${err2}`);
 
-                historyEmbeds = WorkoutDay.getEmbeds(results);
-                if (historyEmbeds.length < 1) {
-                    historyEmbeds =  new EmbedBuilder().setTitle("No history.");
-                }
+                con.query(`SELECT * FROM labels WHERE userID = '${this.id}' AND date = '${startDay}';`, (err3, labels) => {
+                    if (err3) console.log(`Error querying labels for history: ${err3}`);
 
-                callback(historyEmbeds);
+                    if (labels.length > 0) {
+                        historyEmbeds = WorkoutDay.getEmbeds(results, labels[0].label);
+                    } else {
+                        historyEmbeds = WorkoutDay.getEmbeds(results);
+                    }
+
+                    if (!historyEmbeds) {
+                        historyEmbeds = [new EmbedBuilder().setTitle("No history.")];
+                    }
+
+                    callback(historyEmbeds);
+                });
             })
-        })
-        //let printDays = days;
+        });
 
-        /*if (days > 7) {
-            printDays = 7;
-        }
-        if (this.history.length < days) {
-            printDays = this.history.length;
-        }
-
-        for (let i = printDays; i >= 1; i--) {
-            for (let j = 0; j < this.history[startIndex - i].getEmbeds().length; j++) {
-                historyEmbeds.push(this.history[startIndex - i].getEmbeds()[j]);
-            }
-        }*/
+        // Eventually add back the multiple days functionality
     }
 
     getRestDayString(){
+        console.log(this.restDays);
+
         let restDaysString = "";
         for (let i = 0; i < this.restDays.length; i++) {
-            switch (this.restDays[i]) {
+            switch (parseInt(this.restDays[i])) {
                 case 0:
                     restDaysString += "Sunday";
                     break;
@@ -357,7 +316,7 @@ class Account{
             }
             profileEmbed.addFields({ name: `Days Skipped:`, value: ` ${this.skipTotal} days`, inline: true })
             .addFields({ name: `Current Skip Streak:`, value: `${this.skipStreak} days`, inline: true })
-            //.addFields({ name: "Rest Days:", value: this.getRestDayString(), inline: true });
+            .addFields({ name: "Rest Days:", value: this.getRestDayString(), inline: true });
             if(this.squat > 0){
                 profileEmbed.addFields({ name: `Squat:`, value: `${this.squat}lbs`, inline: true });
             }
@@ -438,7 +397,7 @@ class Account{
     skipDay(){
         this.skipTotal++;
         this.skipStreak++;
-        this.writeInfo();
+        this.writeStatsToDB();
     }
 
     undoSet(sets, callback){
@@ -461,13 +420,11 @@ class Account{
                     con.query(`DELETE FROM lifts WHERE setid = ${set.setid};`, (err3, delResult) => {
                         if (err3) console.log(`Deletion error undoing set: ${err3}`);
 
-                        console.log(`xp: ${this.xp}`);
                         this.xp -= Set.getXPAmount(set.movement, set.weight, set.reps, this.bodyweight);
-                        console.log(`xp: ${this.xp}`);
+
                         while (this.xp < 0) {
                             this.level--;
                             this.xp += this.level * 1500;
-                            console.log(`xp: ${this.xp}`);
                         }
 
                         this.currentSetNumber--;
@@ -479,36 +436,88 @@ class Account{
         });
     }
 
+    setDayLabel(newLabel, callback){
+        let today = new Date().toDateString();
+
+        con.connect((err) => {
+            if (err) console.log(`Connection error setting label: ${err}`);
+
+            con.query(`INSERT INTO labels (userID, label, date) VALUES (
+                '${this.id}',
+                '${newLabel}',
+                '${today}'
+            )`, (err2, result) => {
+                if (err2) console.log(`Query error setting label: ${err2}`);
+                callback(true);
+            })
+        });
+    }
+
+    getName(){
+        return this.name;
+    }
+    getId(){
+        return this.id;
+    }
+    getBodyweight(){
+        return this.bodyweight;
+    }
+    getLevel(){
+        return this.level;
+    }
+    getXp(){
+        return this.xp;
+    }
+    getCreationDate(){
+        return this.creationDate;
+    }
+    getHistory(){
+        return this.history;
+    }
+    getSkipTotal(){
+        return this.skipTotal;
+    }
+    getSkipStreak(){
+        return this.skipStreak;
+    }
+    getTotalDays(){
+        return this.history.length;
+    }
+    getRestDays(){
+        return this.restDays;
+    }
+    getSquat(){
+        return this.squat;
+    }
+    getBench(){
+        return this.bench;
+    }
+    getDeadlift(){
+        return this.deadlift;
+    }
+    getTotal(){
+        return this.squat + this.bench + this.deadlift;
+    }
+
     setBodyweight(newBodyweight){
         this.bodyweight = newBodyweight;
-        this.writeInfo();
+        this.writeStatsToDB();
     }
     setRestDays(newRestDays){
         this.restDays = newRestDays;
-        this.writeInfo();
+        this.writeStatsToDB();
     }
     setSquat(newSquat){
         this.squat = newSquat;
-        this.writeInfo();
+        this.writeStatsToDB();
     }
     setBench(newBench){
         this.bench = newBench;
-        this.writeInfo();
+        this.writeStatsToDB();
     }
     setDeadlift(newDeadlift){
         this.deadlift = newDeadlift;
-        this.writeInfo();
-    }
-    setDayLabel(newLabel){
-        let today = new Date().toDateString();
-
-        if (this.history.length >= 1 && this.history[this.history.length - 1].getDate() === today) {
-            this.history[this.history.length - 1].setLabel(newLabel);
-            this.writeInfo();
-            return true;
-        } else {
-            return false;
-        }
+        this.writeStatsToDB();
     }
 }
 

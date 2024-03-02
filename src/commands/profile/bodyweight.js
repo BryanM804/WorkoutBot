@@ -4,7 +4,6 @@ const { findAccount } = require("..\\..\\index.js");
 module.exports = {
     name: "bodyweight",
     description: "Set your body weight to gain xp from bodyweight and assisted exercises.",
-    deleted: true,
     options: [
         {
             name: "weight",
