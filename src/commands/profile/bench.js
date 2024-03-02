@@ -4,6 +4,7 @@ const { findAccount } = require("..\\..\\index.js");
 module.exports = {
     name: "bench",
     description: "Save your one rep max bench record.",
+    deleted: true,
     options: [
         {
             name: "weight",

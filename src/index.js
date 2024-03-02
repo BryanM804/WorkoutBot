@@ -2,8 +2,10 @@ const Account = require(".\\Account.js");
 const { HelpEmbed } = require("./utils/Embeds.js");
 const { Client, IntentsBitField } = require("discord.js");
 const fs = require("fs");
+const sql = require("mysql2");
 const eventHandler = require(".\\handlers\\eventHandler");
 const getAllFiles = require(".\\utils\\getAllFiles.js")
+const createConnection = require(".\\createConnection.js");
 require("dotenv").config();
 
 //To do list:
@@ -20,15 +22,87 @@ const client = new Client({
 
 eventHandler(client);
 
-//Ensuring there is a backup directory to backup accounts.
-if (!fs.readdirSync("backup")) {
-    console.log(`ERROR: ${err}\nMaking new backup directory.`)
-    fs.mkdirSync("backup");
+// Establish a connection to the sql database
+const con = createConnection(); // gitignored so you don't see my password :P
+
+// Temp function for quicker querying while I convert to SQL
+function queryDB(qString, logInfo = false) {
+    con.connect((err) => {
+        if (err) {
+            console.error(err);
+        } else {
+            if (logInfo) console.log("Database connection established.");
+
+            con.query(qString, (err2, result) => {
+                if (err2) console.error(err2);
+                if (logInfo) console.log(result);
+            });
+        }
+    })
 }
+
+//console.log(queryDB(`SELECT bodyweight FROM accounts WHERE id = '154820680687288320'`));
+
+//queryDB(`DELETE FROM lifts WHERE userID = '154820680687288320' AND setnumber = 596`, true);
+/*
+con.connect((err) => {
+    if (err) throw err;
+    const id = '90571183342235648'
+    con.query(`SELECT * FROM lifts WHERE userID = '${id}'`, (err2, results) => {
+        if (err2) throw err2;
+        con.query(`SELECT currentsetnumber FROM accounts WHERE id = '${id}'`, (err3, localNum) => {
+            if (err3) throw err3;
+            for (const result of results) {
+                console.log(result.setnumber + " " + localNum[0].currentsetnumber);
+                if (result.setnumber > localNum[0].currentsetnumber) {
+                    con.query(`UPDATE accounts SET currentsetnumber = ${result.setnumber} WHERE id = '${id}'`, (err4, res4) => {
+                        if (err4) throw err4
+                        console.log(res4);
+                    })
+                }
+            }
+        })
+    })
+})*/
+
+/*
+queryDB(`CREATE TABLE lifts (
+        userID varchar(32) NOT NULL,
+        movement varchar(128) NOT NULL,
+        weight int DEFAULT 0,
+        reps int DEFAULT 0,
+        date varchar(24),
+        setnumber int NOT NULL,
+        FOREIGN KEY (userID) REFERENCES accounts(id)
+)`, true);
+*/
+
+//Ensuring there is a backup directory to backup accounts.
+//if (!fs.readdirSync("backup")) {
+//    console.log(`ERROR: ${err}\nMaking new backup directory.`)
+//    fs.mkdirSync("backup");
+//}
 
 //Creating account objects for each user file when the bot starts
 let accounts = []
 
+
+// In large scale it would be very inefficient to have every account loaded to memory.
+// However in its current state this project is meant to be a private bot for my friends only.
+con.connect((err) => {
+    if (err) {
+        console.error(err);
+    } else {
+        con.query(`SELECT * FROM accounts`, (err2, result) => {
+            if (err2) console.error(err2);
+            for (const acc of result) {
+                accounts.push(new Account(acc.name, acc.id));
+            }
+        });
+    }
+});
+
+/*
 const files = fs.readdirSync("accounts");
 if (!files) {
     console.log(`ERROR: ${err}\nMaking new accounts directory.`)
@@ -54,8 +128,55 @@ for (let i = 0; i < files.length; i++) {
             process.exit();
         }
     }
-}
+}*/
 
+/*
+for (const account of accounts) {
+    const accountHistory = account.getHistory();
+    let setNumber = 1;
+    for (const day of accountHistory) {
+        for (const set of day.getSets()) {
+            set.setSetNumber(setNumber);
+            setNumber++;
+        }
+    }
+    account.writeInfo();
+}
+*/
+// One time db transfer
+/*
+for (const account of accounts) {
+    const accountHistory = account.getHistory();
+    for (const day of accountHistory) {
+        for (const set of day.getSets()) {
+            con.connect((err) => {
+                if (err) throw err;
+                con.query(`INSERT INTO lifts (userID, movement, weight, reps, date, setnumber) VALUES (
+                    '${account.getId()}',
+                    '${set.getMovement()}',
+                    ${set.getWeight()},
+                    ${set.getReps()},
+                    '${day.getDate()}',
+                    ${set.getSetNumber()}
+                )`, (err2, result) => {
+                    if (err2) console.log(err2);
+                })
+            })
+        }
+    }
+    
+    //con.connect((err) => {
+    //    if (err) throw err;
+    //    con.query(`UPDATE accounts SET currentsetnumber = ${setNumber} WHERE id = '${account.getId()}'`, (err2, result) => {
+    //        if (err2) console.log(err2);
+    //        console.log(result);
+    //    });
+    //});
+    // Update accounts setNumber after all sets are loaded
+    
+}*/
+
+// TO BE REWRITTEN
 //Checking if Users skipped a day
 function checkSkips(){
     if (new Date().getHours() >= 23) {
@@ -90,44 +211,6 @@ function checkSkips(){
     }
 }
 
-// Makes a backup file for each account file
-function makeBackup(){
-    for (let i = 0; i < accounts.length; i++) {
-        accounts[i].writeInfo();
-    }
-
-    fs.readdir("accounts", (err, files) => {
-        for (const file of files) {
-            if(err)
-                console.error(err);
-
-            let currentSize, backupSize;
-            let currentFile, backupFile;
-
-            currentFile = fs.openSync(`accounts\\${file}`);
-            if (fs.existsSync(`backup\\${file}`)) {
-                backupFile = fs.openSync(`backup\\${file}`);
-            }
-            
-            if (currentFile) {
-                currentSize = fs.fstatSync(currentFile).size;
-                fs.closeSync(currentFile);
-            }
-            if (backupFile) {
-                backupSize = fs.fstatSync(backupFile).size;
-                fs.closeSync(backupFile);
-            }
-
-            if (currentSize < backupSize) {
-                console.log(`Corrupt main file detected, skipping backup for ${file}`);
-            } else {
-                fs.copyFile(`accounts\\${file}`, `backup\\${file}`, (cpyErr) => {if(cpyErr) console.error(cpyErr)});
-            }
-        }
-    });
-    console.log(`Backup successful on ${new Date().toDateString()} at ${new Date().toTimeString()}`);
-}
-
 // Clears the folder of generated graphs
 function clearGraphs() {
     const graphs = getAllFiles(".\\src\\graphs");
@@ -138,6 +221,7 @@ function clearGraphs() {
     }
 }
 
+
 //Returns the Account from the array of accounts that matches the name and id
 const findAccount = function(name, id, createNew = true){
     for (let i = 0; i < accounts.length; i++) {
@@ -145,9 +229,8 @@ const findAccount = function(name, id, createNew = true){
             return accounts[i];
         }
     }
-    if (createNew) {
+    if (createNew) { // Create new wont work properly for the time being
         accounts.push(new Account(name, id));
-        console.log(`Created new account for ${name}`);
         return accounts[accounts.length - 1];
     } else {
         return null;
@@ -218,10 +301,10 @@ const sortAccounts = function(sortby) {
 
 try {
     client.on("ready", (c) => {
-        setInterval(makeBackup, 14400000);//Backup every 4 hours
-        setInterval(checkSkips, 900000);//Checks every 15 minutes
-        makeBackup();
-        checkSkips();
+        //setInterval(makeBackup, 14400000);//Backup every 4 hours
+        //setInterval(checkSkips, 900000);//Checks every 15 minutes
+        //makeBackup();
+        //checkSkips();
         clearGraphs();
     });
 } catch (interactionError) {

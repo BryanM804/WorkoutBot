@@ -1,32 +1,90 @@
 const fs = require("fs");
+const sql = require("mysql2");
 const { EmbedBuilder } = require("discord.js");
 const WorkoutDay = require(".\\WorkoutDay.js");
+const Set = require(".\\Set.js");
+const createConnection = require(".\\createConnection.js");
+const con = createConnection();
 
 class Account{
-    constructor(name, id, bodyweight, level, xp, creationDate, skipTotal, skipStreak, restDays, squat, bench, deadlift, history){
+    constructor(name, id){
         this.name = name;
         this.id = id;
-        this.bodyweight = bodyweight || 0;
-        this.level = level || 1;
-        this.xp = xp || 0;
-        this.creationDate = creationDate || new Date().toDateString();
-        this.skipTotal = skipTotal || 0;
-        this.skipStreak = skipStreak || 0;
-        this.restDays = restDays || [];
-        this.squat = squat || 0;
-        this.bench = bench || 0;
-        this.deadlift = deadlift || 0;
+        //this.bodyweight = bodyweight || 0;
+        //this.level = level || 1;
+        //this.xp = xp || 0;
+        //this.creationDate = creationDate || new Date().toDateString();
+        //this.skipTotal = skipTotal || 0;
+        //this.skipStreak = skipStreak || 0;
+        //this.restDays = restDays || [];
+        //this.squat = squat || 0;
+        //this.bench = bench || 0;
+        //this.deadlift = deadlift || 0;
         //If the user has a history it converts the history it has read into WorkoutDay objects
-        if (history != null && history.length > 0) {
+        /*if (history != null && history.length > 0) {
             this.history = []
             for (let i = 0; i < history.length; i++) {
                 this.history.push(new WorkoutDay(history[i].date, history[i].sets, history[i].label));
             }
         } else {
             this.history = [];
-        }
-        this.file = `accounts\\${name}.json`;
-        this.writeInfo();
+        }*/
+        //this.file = `accounts\\${name}.json`;
+        //this.writeInfo();
+        this.getStatsFromDB(true);
+    }
+
+    getStatsFromDB(logInfo = false, callback) {
+        con.connect((err) => {
+            if (err) console.log(`Connection error: ${err}`);
+
+            con.query(`SELECT * FROM accounts WHERE id = '${this.id}'`, (err2, result) => {
+                if (err2) console.log(`Query error: ${err2}`);
+                if (result.length > 0) {
+                    const profile = result[0];
+                    this.bodyweight = profile.bodyweight;
+                    this.level = profile.level;
+                    this.xp = profile.xp;
+                    this.creationDate = profile.creationtate;
+                    this.skipTotal = profile.skiptotal;
+                    this.skipStreak = profile.skipstreak;
+                    this.squat = profile.squat;
+                    this.bench = profile.bench;
+                    this.deadlift = profile.deadlift;
+                    this.currentSetNumber = profile.currentsetnumber;
+
+                    if (callback) callback(true);
+                } else {
+                    //con.query(`INSERT INTO accounts (id, name, bodyweight, level, xp, creationDate)`)
+                }
+
+                if (logInfo) console.log(result[0]);
+            });
+        })
+    }
+
+    writeStatsToDB(logInfo = false, callback) {
+        con.connect((err) => {
+            if (err) console.log(`Connection error: ${err}`);
+
+            con.query(`UPDATE accounts SET 
+            bodyweight = ${this.bodyweight},
+            level = ${this.level},
+            xp = ${this.xp},
+            skiptotal = ${this.skipTotal},
+            skipstreak = ${this.skipStreak},
+            squat = ${this.squat},
+            bench = ${this.bench},
+            deadlift = ${this.deadlift},
+            currentsetnumber = ${this.currentSetNumber} 
+            WHERE id = '${this.id}'`, (err2, result) => {
+                if (err2) console.log(`Query error: ${err2}`);
+                if (logInfo) console.log(result);
+            }, (err2, result) => {
+                if (err2) console.log(`Error updating accounts: ${err2}`);
+                if (callback) callback();
+            })
+        })
     }
 
     getName(){
@@ -211,23 +269,32 @@ class Account{
     }
 
     //Returns the embed(s) for all of the sets for a given (days) starting from (startDate)
-    getHistoryEmbeds(days, startDate){
-        if (this.history.length < 1) {
-            return new EmbedBuilder().setTitle("No history.");
-        }
-
-        let startDay = new Date(Date.parse(startDate)).toDateString();
-        let startIndex = this.history.length;
-        for (let i = 0; i < this.history.length; i++) {
-            if (this.history[i].getDate() === startDay) {
-                startIndex = i + 1;
-            }
+    getHistoryEmbeds(days, startDate, callback){
+        let startDay;
+        if (startDate) {
+            startDay = new Date(Date.parse(startDate)).toDateString();
+        } else {
+            startDay = new Date().toDateString();
         }
 
         let historyEmbeds = [];
-        let printDays = days;
+        
+        con.connect((err) => {
+            if (err) console.log(`Connection error in history: ${err}`);
+             con.query(`SELECT * FROM lifts WHERE userID = '${this.id}' AND date = '${startDay}';`, (err2, results) => {
+                if (err2) console.log(`Error reading data for history: ${err2}`);
 
-        if (days > 7) {
+                historyEmbeds = WorkoutDay.getEmbeds(results);
+                if (historyEmbeds.length < 1) {
+                    historyEmbeds =  new EmbedBuilder().setTitle("No history.");
+                }
+
+                callback(historyEmbeds);
+            })
+        })
+        //let printDays = days;
+
+        /*if (days > 7) {
             printDays = 7;
         }
         if (this.history.length < days) {
@@ -238,8 +305,7 @@ class Account{
             for (let j = 0; j < this.history[startIndex - i].getEmbeds().length; j++) {
                 historyEmbeds.push(this.history[startIndex - i].getEmbeds()[j]);
             }
-        }
-        return historyEmbeds;
+        }*/
     }
 
     getRestDayString(){
@@ -278,9 +344,10 @@ class Account{
         return restDaysString;
     }
 
-    getProfileEmbed(user){
+    getProfileEmbed(user, callback){
         //Needs user for the avatarURL
-        let profileEmbed = new EmbedBuilder()
+        this.getStatsFromDB(false, (result) => {
+            let profileEmbed = new EmbedBuilder()
             .setTitle(this.name)
             .setThumbnail(user.avatarURL())
             .setFooter({ text: `Created ${this.creationDate}` })
@@ -290,7 +357,7 @@ class Account{
             }
             profileEmbed.addFields({ name: `Days Skipped:`, value: ` ${this.skipTotal} days`, inline: true })
             .addFields({ name: `Current Skip Streak:`, value: `${this.skipStreak} days`, inline: true })
-            .addFields({ name: "Rest Days:", value: this.getRestDayString(), inline: true });
+            //.addFields({ name: "Rest Days:", value: this.getRestDayString(), inline: true });
             if(this.squat > 0){
                 profileEmbed.addFields({ name: `Squat:`, value: `${this.squat}lbs`, inline: true });
             }
@@ -301,121 +368,71 @@ class Account{
                 profileEmbed.addFields({ name: `Deadlift:`, value: `${this.deadlift}lbs`, inline: true });
             }
 
-        return profileEmbed;
+            if (callback) callback(profileEmbed);
+        });
     }
 
-    //In the future I may update the way files are stored since as is, I forsee them getting quite large
-    writeInfo(){
-        fs.writeFileSync(this.file, JSON.stringify(this));
-    }
-
-    logSet(movement, weight, reps){
+    logSet(movement, weight, reps, callback){
         let today = new Date().toDateString();
+        
+        this.xp += Set.getXPAmount(movement, weight, reps, this.bodyweight);
+        
+        this.currentSetNumber++;
 
-        if (this.history.length >= 1 && this.history[this.history.length - 1].getDate() === today) {
-            this.history[this.history.length - 1].addSet(movement, weight, reps, (weight * reps));
-        } else {
-            this.history.push(new WorkoutDay(new Date().toDateString()));
-            console.log("created new day");
-            this.logSet(movement, weight, reps);
-            return;
-        }
+        con.connect((err) => {
+            if (err) console.log(`Connection error: ${err}`);
+            con.query(`INSERT INTO lifts (userID, movement, weight, reps, date, setnumber) VALUES (
+                '${this.id}',
+                '${movement}',
+                ${weight},
+                ${reps},
+                '${today}',
+                ${this.currentSetNumber}
+            )`, (err2, results) => {
+                if (err2) console.log(`Error inserting new set: ${err2}`);
 
-        //Dumbbell exercises count for double the weight internally
-        if (movement.indexOf("Dumbbell") >= 0 || movement.startsWith("Hammer")) {
-            this.xp += 100 + (2 * weight * reps);
-            this.history[this.history.length - 1].getSets()[this.history[this.history.length - 1].getSets().length - 1].setSetTotal((2 * weight * reps));
-        } else if (movement.indexOf("Assisted") >= 0) {
-            //If an exercise is assisted and the user has bodyweight registered this adjusts xp and total accordingly
-            if (this.bodyweight > 0) {
-                this.xp += 100 + ((this.bodyweight - weight) * reps);
-                this.history[this.history.length - 1].getSets()[this.history[this.history.length - 1].getSets().length - 1].setSetTotal((this.bodyweight - weight) * reps);
-            } else {
-                this.xp += 100;
-                this.history[this.history.length - 1].getSets()[this.history[this.history.length - 1].getSets().length - 1].setSetTotal(0);
-            }
-        } else if (movement == "Pull Up" || movement == "Chin Up" || movement == "Dip") {
-            //If an exercise is a bodyweight exercise this adjusts xp and total accordingly
-            if (this.bodyweight > 0) {
-                this.xp += 100 + ((this.bodyweight + weight) * reps);
-                this.history[this.history.length - 1].getSets()[this.history[this.history.length - 1].getSets().length - 1].setSetTotal((this.bodyweight + weight) * reps);
-            } else {
-                this.xp += 100;
-            }
-        } else {
-            this.xp += 100 + weight * reps;
-        }
+                // Level up loop
+                while (this.xp >= this.level * 1500) {
+                    this.xp -= (this.level * 1500);
+                    this.level++;
+                    console.log(`${this.name} leveled up to ${this.level}`);
+                }
 
-        // Level up loop
-        while (this.xp >= this.level * 1500) {
-            this.xp -= (this.level * 1500);
-            this.level++;
-            console.log(`${this.name} leveled up to ${this.level}`);
-        }
-
-        this.skipStreak = 0;
-        this.writeInfo();
+                this.skipStreak = 0;
+                this.writeStatsToDB();
+                if (callback) callback();
+            });
+        });
     }
 
-    //temp for recreating profiles
-    logSetOnDate(date, movement, weight, reps){
-        let today = date;
-        if (this.history.length >= 1 && this.history[this.history.length - 1].getDate() === today) {
-            this.history[this.history.length - 1].addSet(movement, weight, reps, (weight * reps));
-        } else {
-            this.history.push(new WorkoutDay(date));
-            console.log("created new day");
-            this.logSetOnDate(date, movement, weight, reps);
-            return;
-        }
-
-        //Dumbbell exercises count for double the weight internally
-        if (movement.indexOf("Dumbbell") >= 0 || movement.startsWith("Hammer")) {
-            this.xp += 100 + (2 * weight * reps);
-            this.history[this.history.length - 1].getSets()[this.history[this.history.length - 1].getSets().length - 1].setSetTotal((2 * weight * reps));
-        } else if(movement.indexOf("Assisted") >= 0) {
-            //If an exercise is assisted and the user has bodyweight registered this adjusts xp and total accordingly
-            if (this.bodyweight > 0) {
-                this.xp += 100 + ((this.bodyweight - weight) * reps);
-                this.history[this.history.length - 1].getSets()[this.history[this.history.length - 1].getSets().length - 1].setSetTotal((this.bodyweight - weight) * reps);
-            } else {
-                this.xp += 100;
-                this.history[this.history.length - 1].getSets()[this.history[this.history.length - 1].getSets().length - 1].setSetTotal(0);
-            }
-        } else if (movement == "Pull Up" || movement == "Chin Up" || movement == "Dip") {
-            //If an exercise is a bodyweight exercise this adjusts xp and total accordingly
-            if (this.bodyweight > 0) {
-                this.xp += 100 + ((this.bodyweight + weight) * reps);
-                this.history[this.history.length - 1].getSets()[this.history[this.history.length - 1].getSets().length - 1].setSetTotal((this.bodyweight + weight) * reps);
-            } else {
-                this.xp += 100;
-            }
-        } else {
-            this.xp += 100 + weight * reps;
-        }
-        while (this.xp >= this.level * 1500) {
-            this.xp -= (this.level * 1500);
-            this.level++;
-            console.log(`${this.name} leveled up to ${this.level}`);
-        }
-        this.skipStreak = 0;
-        this.writeInfo();
-    }
-
-    repeatSet(weight, reps){
+    
+    repeatSet(weight, reps, repeats, callback){
         let today = new Date().toDateString();
         let repeatWeight, repeatReps;
 
-        if (this.history.length >= 1 && this.history[this.history.length - 1].getDate() === today && this.history[this.history.length - 1].getSets().length >= 1) {
-            const lastSet = this.history[this.history.length - 1].getSets()[this.history[this.history.length - 1].getSets().length - 1];
-            repeatWeight = weight ? weight : lastSet.getWeight();
-            repeatReps = reps ? reps : lastSet.getReps();
+        con.connect((err) => {
+            if (err) console.log(`Connection error in repeat set: ${err}`);
+            con.query(`SELECT * FROM lifts WHERE userID = '${this.id}' AND date = '${today}' ORDER BY setid DESC;`, (err2, sets) => {
+                if (err2) console.log(`Querying error in repeat set: ${err2}`);
+                if (sets.length > 1) {
+                    const lastSet = new Set(sets[0].movement, sets[0].weight, sets[0].reps, this.bodyweight);
+                    repeatWeight = weight ? weight : lastSet.getWeight();
+                    repeatReps = reps ? reps : lastSet.getReps();
 
-            this.logSet(lastSet.getMovement(), repeatWeight, repeatReps);
-            return this.history[this.history.length - 1].getSets()[this.history[this.history.length - 1].getSets().length - 1];
-        } else {
-            return false;
-        }
+                    for (let i = 0; i < repeats; i++) {
+                        if (i == repeats - 1) break;
+
+                        this.logSet(lastSet.getMovement(), repeatWeight, repeatReps);
+                    }
+                    // I want the callback for the last one.
+                    this.logSet(lastSet.getMovement(), repeatWeight, repeatReps, () => {
+                        if (callback) callback(new Set(lastSet.getMovement(), repeatWeight, repeatReps, this.bodyweight));
+                    });
+                } else {
+                    if (callback) callback(false);
+                }
+            });
+        });
     }
 
     skipDay(){
@@ -424,35 +441,42 @@ class Account{
         this.writeInfo();
     }
 
-    undoSet(sets){
+    undoSet(sets, callback){
         let today = new Date().toDateString();
-        if (!(this.history.length >= 1 && this.history[this.history.length - 1].getDate() === today)) {
-            return false;
-        }
 
         let removeSets = sets || 1;
-        if(removeSets <= 0)
-            removeSets = 1;
+        if(removeSets <= 0) removeSets = 1;
 
-        for (let i = 0; i < removeSets; i++) {
-           let result = this.history[this.history.length - 1].removeSet();
-           if (result < 0) {
-                this.history.pop();
-                this.writeInfo();
-                return false;
-           } else {
-                this.xp -= result + 100;
-                while (this.xp < 0) {
-                    this.level--;
-                    this.xp += this.level * 1500;
+        con.connect((err) => {
+            if (err) console.log(`Connection error: ${err}`);
+            con.query(`SELECT * FROM lifts WHERE userID = '${this.id}' AND date = '${today}' ORDER BY setid DESC;`, (err2, results) => {
+                if (err2) console.log(`Query error undoing set: ${err2}`);
+                if (results.length == 0) return false;
+
+                removeSets = removeSets > results.length ? results.length : removeSets;
+
+                for (let i = 0; i < removeSets; i++) {
+                    let set = results[i];
+
+                    con.query(`DELETE FROM lifts WHERE setid = ${set.setid};`, (err3, delResult) => {
+                        if (err3) console.log(`Deletion error undoing set: ${err3}`);
+
+                        console.log(`xp: ${this.xp}`);
+                        this.xp -= Set.getXPAmount(set.movement, set.weight, set.reps, this.bodyweight);
+                        console.log(`xp: ${this.xp}`);
+                        while (this.xp < 0) {
+                            this.level--;
+                            this.xp += this.level * 1500;
+                            console.log(`xp: ${this.xp}`);
+                        }
+
+                        this.currentSetNumber--;
+                        this.writeStatsToDB();
+                    });
                 }
-           }
-        }
-        if (this.history[this.history.length - 1].getSets().length == 0) {
-            this.history.pop();
-        }
-        this.writeInfo();
-        return true;
+                if (callback) callback(true);
+            });
+        });
     }
 
     setBodyweight(newBodyweight){

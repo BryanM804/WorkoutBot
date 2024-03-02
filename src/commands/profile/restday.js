@@ -4,6 +4,7 @@ const { findAccount } = require("..\\..\\index.js");
 module.exports = {
     name: "restday",
     description: "Save/unsave your programmed rest days so they don't count as skips.",
+    deleted: true,
     options: [
         {
             name: "day",

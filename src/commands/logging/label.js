@@ -4,6 +4,7 @@ const { findAccount } = require("..\\..\\index.js");
 module.exports = {
     name: "label",
     description: "Set a label for the current day.",
+    deleted: true,
     options: [
         {
             name: "label",

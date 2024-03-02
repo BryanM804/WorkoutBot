@@ -44,11 +44,11 @@ module.exports = {
             let prevLvl = tempAccount.getLevel();
 
             for (let i = 0; i < sets; i++) {
-                tempAccount.logSet(movement, weight, reps);
-            }
-
-            if (tempAccount.getLevel() > prevLvl) {
-                interaction.channel.send(`${interaction.user} has leveled up to level ${tempAccount.getLevel()}!`)
+                tempAccount.logSet(movement, weight, reps, () => {
+                    if (tempAccount.getLevel() > prevLvl) {
+                        interaction.channel.send(`${interaction.user} has leveled up to level ${tempAccount.getLevel()}!`);
+                    }
+                });
             }
 
             //Reply in chat (will likely change to an embed later)

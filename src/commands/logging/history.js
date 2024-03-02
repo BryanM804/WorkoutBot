@@ -23,15 +23,15 @@ module.exports = {
         if (days <= 0) {
             interaction.reply({ content: "Invalid number of days.", ephemeral: true });
         } else {
-            let historyEmbeds = findAccount(interaction.user.username, interaction.user.id).getHistoryEmbeds(days, startDate);
-
-            if (startDate) {
-                console.log(`${interaction.user.username} fetched ${days} days of history from ${new Date(Date.parse(startDate)).toDateString()}.`);
-            } else {
-                console.log(`${interaction.user.username} fetched ${days} days of history from most recent date.`)
-            }
-
-            interaction.reply({ embeds: historyEmbeds });
+            let userAccount = findAccount(interaction.user.username, interaction.user.id);
+            userAccount.getHistoryEmbeds(days, startDate, (historyEmbeds) => {
+                if (startDate) {
+                    console.log(`${interaction.user.username} fetched ${days} days of history from ${new Date(Date.parse(startDate)).toDateString()}.`);
+                } else {
+                    console.log(`${interaction.user.username} fetched ${days} days of history from most recent date.`)
+                }
+                interaction.reply({ embeds: historyEmbeds });
+            });
         }
     }
 }

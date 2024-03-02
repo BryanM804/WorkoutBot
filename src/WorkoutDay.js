@@ -7,7 +7,7 @@ class WorkoutDay{
         if(sets != null && sets.length > 0){
             this.sets = [];
             for(let i = 0; i < sets.length; i++){
-                this.sets.push(new Set(sets[i].movement, sets[i].weight, sets[i].reps, sets[i].setTotal))
+                this.sets.push(new Set(sets[i].movement, sets[i].weight, sets[i].reps, sets[i].setTotal, sets[i].setNumber))
             }
         }else{
             this.sets = [];
@@ -69,29 +69,31 @@ class WorkoutDay{
         return average / count;
     }
 
-    getEmbeds(){
+    static getEmbeds(sets){
+        if (sets.length < 1) return;
+        
         let dayEmbeds = [];
         let embedNum = 0;
         dayEmbeds[0] = new EmbedBuilder();
 
-        if (this.label != "") {
-            dayEmbeds[0].setTitle(this.label)
-            .setAuthor({ name: this.date});
-        } else {
-            dayEmbeds[0].setTitle(this.date);
-        }
+        //if (this.label != "") {
+        //    dayEmbeds[0].setTitle(this.label)
+        //    .setAuthor({ name: this.date});
+        //} else {
+            dayEmbeds[0].setTitle(sets[0].date);
+        //}
 
-        this.getTotal();
+        //this.getTotal();
 
-        for (let i = 0; i < this.sets.length; i++) {
+        for (let i = 0; i < sets.length; i++) {
             if ((i+1) % 26 === 0) {
                 embedNum++;
-                dayEmbeds.push(new EmbedBuilder().setTitle(`${this.date} Page ${embedNum + 1}`));
+                dayEmbeds.push(new EmbedBuilder().setTitle(`${sets[0].date} Page ${embedNum + 1}`));
             }
-            dayEmbeds[embedNum].addFields({ name: this.sets[i].getMovement(), value: `${this.sets[i].getWeight()}lbs for ${this.sets[i].getReps()} reps`, inline: true});
+            dayEmbeds[embedNum].addFields({ name: sets[i].movement, value: `${sets[i].weight}lbs for ${sets[i].reps} reps`, inline: true});
         }
 
-        dayEmbeds[embedNum].setFooter({ text: `Total Weight: ${this.dayTotal}lbs | Total Sets: ${this.sets.length}`});
+        dayEmbeds[embedNum].setFooter({ text: `Total Weight: ${0}lbs | Total Sets: ${sets.length}`});
         return dayEmbeds;
     }
 }

@@ -4,6 +4,7 @@ const { findAccount } = require("..\\..\\index.js");
 module.exports = {
     name: "stats",
     description: "See statistics for a specific movement.",
+    deleted: true,
     options: [
         {
             name: "movement",

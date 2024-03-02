@@ -6,6 +6,7 @@ const generateGraph = require("..\\..\\utils\\generateGraph.js");
 module.exports = {
     name: "graph",
     description: "Generate a graph of average totals for a certain exercise across all logged days.",
+    deleted: true,
     options: [
         {
             name: "movement",

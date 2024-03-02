@@ -4,6 +4,7 @@ const { findAccount, sortAccounts } = require("..\\..\\index.js");
 module.exports = {
     name: "leaderboard",
     description: "Leaderboard sorted by level by default.",
+    deleted: true,
     options: [
         {
             name: "stat",
