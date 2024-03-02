@@ -229,7 +229,9 @@ class Account{
     //Returns the embed(s) for all of the sets for a given (days) starting from (startDate)
     getHistoryEmbeds(days, startDate, callback){
         let startDay;
-        let printDays = days;
+        let callbackNum = 1;
+
+        days = days > 7 ? 7 : days;
 
         if (startDate) {
             startDay = new Date(Date.parse(startDate)).toDateString();
@@ -241,33 +243,40 @@ class Account{
         
         con.connect((err) => {
             if (err) console.log(`Connection error in history: ${err}`);
-             con.query(`SELECT * FROM lifts WHERE userID = '${this.id}' AND date = '${startDay}';`, (err2, results) => {
-                if (err2) console.log(`Error reading data for history: ${err2}`);
 
-                con.query(`SELECT * FROM labels WHERE userID = '${this.id}' AND date = '${startDay}';`, (err3, labels) => {
-                    if (err3) console.log(`Error querying labels for history: ${err3}`);
+            for (let i = days - 1; i >= 0; i--) {
+                let date = new Date(Date.parse(startDay) - (86400000 * i)).toDateString();
 
-                    if (labels.length > 0) {
-                        historyEmbeds = WorkoutDay.getEmbeds(results, labels[0].label);
-                    } else {
-                        historyEmbeds = WorkoutDay.getEmbeds(results);
-                    }
+                console.log(date);
 
-                    if (!historyEmbeds) {
-                        historyEmbeds = [new EmbedBuilder().setTitle("No history.")];
-                    }
+                con.query(`SELECT * FROM lifts WHERE userID = '${this.id}' AND date = '${date}';`, (err2, results) => {
+                    if (err2) console.log(`Error reading data for history: ${err2}`);
 
-                    callback(historyEmbeds);
-                });
-            })
+                    con.query(`SELECT * FROM labels WHERE userID = '${this.id}' AND date = '${date}';`, (err3, labels) => {
+                        if (err3) console.log(`Error querying labels for history: ${err3}`);
+
+                        let embeds = WorkoutDay.getEmbeds(results, labels.length > 0 ? labels[0].label : null);
+                        
+                        if (embeds) {
+                            for (let x = 0; x < embeds.length; x++) {
+                                historyEmbeds.push(embeds[x]);
+                            }
+                        } else {
+                            historyEmbeds.push(new EmbedBuilder().setTitle("No history.").setAuthor({ name: date }));
+                        }
+                        
+                        if (callbackNum == days) {
+                            if (callback) callback(historyEmbeds);
+                        } else {
+                            callbackNum++;
+                        }
+                    });
+                })
+            }
         });
-
-        // Eventually add back the multiple days functionality
     }
 
     getRestDayString(){
-        console.log(this.restDays);
-
         let restDaysString = "";
         for (let i = 0; i < this.restDays.length; i++) {
             switch (parseInt(this.restDays[i])) {
@@ -306,24 +315,25 @@ class Account{
     getProfileEmbed(user, callback){
         //Needs user for the avatarURL
         this.getStatsFromDB(false, (result) => {
+
             let profileEmbed = new EmbedBuilder()
             .setTitle(this.name)
             .setThumbnail(user.avatarURL())
             .setFooter({ text: `Created ${this.creationDate}` })
             .addFields({ name: `Level ${this.level}`, value: `XP: ${this.xp}/${this.level * 1500}` });
-            if(this.bodyweight > 0){
+            if (this.bodyweight > 0) {
                 profileEmbed.addFields({ name: `Body weight:`, value: `${this.bodyweight}lbs` });
             }
             profileEmbed.addFields({ name: `Days Skipped:`, value: ` ${this.skipTotal} days`, inline: true })
             .addFields({ name: `Current Skip Streak:`, value: `${this.skipStreak} days`, inline: true })
             .addFields({ name: "Rest Days:", value: this.getRestDayString(), inline: true });
-            if(this.squat > 0){
+            if (this.squat > 0) {
                 profileEmbed.addFields({ name: `Squat:`, value: `${this.squat}lbs`, inline: true });
             }
-            if(this.bench > 0){
+            if (this.bench > 0) {
                 profileEmbed.addFields({ name: `Bench:`, value: `${this.bench}lbs`, inline: true });
             }
-            if(this.deadlift > 0){
+            if (this.deadlift > 0) {
                 profileEmbed.addFields({ name: `Deadlift:`, value: `${this.deadlift}lbs`, inline: true });
             }
 
@@ -373,16 +383,16 @@ class Account{
             if (err) console.log(`Connection error in repeat set: ${err}`);
             con.query(`SELECT * FROM lifts WHERE userID = '${this.id}' AND date = '${today}' ORDER BY setid DESC;`, (err2, sets) => {
                 if (err2) console.log(`Querying error in repeat set: ${err2}`);
+
                 if (sets.length > 1) {
                     const lastSet = new Set(sets[0].movement, sets[0].weight, sets[0].reps, this.bodyweight);
                     repeatWeight = weight ? weight : lastSet.getWeight();
                     repeatReps = reps ? reps : lastSet.getReps();
 
-                    for (let i = 0; i < repeats; i++) {
-                        if (i == repeats - 1) break;
-
+                    for (let i = 0; i < repeats - 1; i++) {
                         this.logSet(lastSet.getMovement(), repeatWeight, repeatReps);
                     }
+
                     // I want the callback for the last one.
                     this.logSet(lastSet.getMovement(), repeatWeight, repeatReps, () => {
                         if (callback) callback(new Set(lastSet.getMovement(), repeatWeight, repeatReps, this.bodyweight));
@@ -448,6 +458,7 @@ class Account{
                 '${today}'
             )`, (err2, result) => {
                 if (err2) console.log(`Query error setting label: ${err2}`);
+
                 callback(true);
             })
         });
