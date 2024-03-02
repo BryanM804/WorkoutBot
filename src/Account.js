@@ -78,8 +78,8 @@ class Account{
             })
         })
     }
-    getStats(movement){
-        if (movement == null || this.history.length <= 0) return;
+    getStats(movement, callback){
+        if (movement == null) return;
 
         let thirtyDayAvgWeight = 0;
         let thirtyDayAvgReps = 0;
@@ -94,86 +94,70 @@ class Account{
         let lifetimeCount = 0;
         let thirtyDayCount = 0;
 
-        for (let i = this.history.length - 1; i >= 0; i--) {
-            for (let j = 0; j < this.history[i].getSets().length; j++) {
-                let currentSet = this.history[i].getSets()[j];
+        con.connect((err) => {
+            if (err) console.log(`Connection error getting stats: ${err}`);
 
-                if (currentSet.getMovement() == movement) {
-                    if (i > this.history.length - 30) {
-                        thirtyDayAvgWeight += currentSet.getWeight();
-                        thirtyDayAvgReps += currentSet.getReps();
+            // If this originated as a database I could have sorted by setid but that is all messed up.
+            con.query(`SELECT * FROM lifts WHERE userID = '${this.id}' AND movement = '${movement}' ORDER BY setnumber DESC`, (err2, sets) => {
+                if (err2) console.log(`Querying error getting stats: ${err2}`);
+                if (!sets) {
+                    if (callback) callback(new EmbedBuilder().setTitle(`No data logged for ${movement}`));
+                    return;
+                }
+
+                let currDate = sets[0].date;
+                let dateCount = 1;
+
+                for (let set of sets) {
+                    let total = new Set(set.movement, set.weight, set.reps, this.bodyweight).getSetTotal()
+
+                    if (set.date != currDate) {
+                        currDate = set.date;
+                        dateCount++;
+                    }
+
+                    if (dateCount < 30) {
                         thirtyDayCount++;
+                        thirtyDayAvgWeight += set.weight;
+                        thirtyDayAvgReps += set.reps;
                     }
-                    if (currentSet.getWeight() > mostWeight) {
-                        mostWeight = currentSet.getWeight();
-                        mostWeightDate = this.history[i].getDate();
+
+                    if (set.weight > mostWeight) {
+                        mostWeight = set.weight;
+                        mostWeightDate = set.date;
                     }
-                    if (currentSet.getReps() > mostReps) {
-                        mostReps = currentSet.getReps();
-                        mostRepsDate = this.history[i].getDate();
+                    if (set.reps > mostReps) {
+                        mostReps = set.reps;
+                        mostRepsDate = set.date;
                     }
-                    if (currentSet.getSetTotal() > bestTotal) {
-                        bestTotal = currentSet.getSetTotal();
-                        bestSetWeight = currentSet.getWeight();
-                        bestSetReps = currentSet.getReps();
-                        bestSetDate = this.history[i].getDate();
+
+                    if (total > bestTotal) {
+                        bestTotal = total;
+                        bestSetDate = set.date;
+                        bestSetWeight = set.weight;
+                        bestSetReps = set.reps;
                     }
-                        
-                    lifetimeCount++;
                 }
-            }
-        }
-        
-        thirtyDayAvgWeight /= thirtyDayCount;
-        thirtyDayAvgReps /= thirtyDayCount;
-        
-        if (lifetimeCount == 0) {
-            return new EmbedBuilder().setTitle(`No data logged for ${movement}`);
-        } else {
-            //Averages are rounded so they only display one decimal place
-            let statsEmbed = new EmbedBuilder()
-            .setTitle(`${this.name}'s ${movement}`)
-            .addFields({ name: "\0", value: "**__30 Day__**" })
-            .addFields({ name: "Average Weight", value: `${Math.round(thirtyDayAvgWeight * 10) / 10}lbs`, inline: true })
-            .addFields({ name: "Average Reps", value: `${Math.round(thirtyDayAvgReps * 10) / 10}`, inline: true })
-            .addFields({ name: "\0", value: "**__Records__**" })
-            .addFields({ name: "Most Weight", value: `${mostWeight}lbs on ${mostWeightDate}`, inline: true })
-            .addFields({ name: "Most Reps", value: `${mostReps} reps on ${mostRepsDate}`, inline: true })
-            .addFields({ name: "Best Set", value: `${bestSetWeight}lbs x ${bestSetReps} reps = ${bestTotal} on ${bestSetDate}`, inline: true })
-            .setFooter({ text: `Total Sets: ${lifetimeCount}\nSets recorded in the last 30 days: ${thirtyDayCount}`})
 
-            return statsEmbed;
-        }
-    }
+                lifetimeCount = sets.length;
+                thirtyDayAvgReps /= thirtyDayCount;
+                thirtyDayAvgWeight /= thirtyDayCount;
 
-    // Leaving this here in case I decide to use it for something else in the future
-    // Essentially replaced with the data version below.
-    getAverages(exercise) {
-        if (this.history.length < 1) return null;
+                //Averages are rounded so they only display one decimal place
+                let statsEmbed = new EmbedBuilder()
+                .setTitle(`${this.name}'s ${movement}`)
+                .addFields({ name: "\0", value: "**__30 Day__**" })
+                .addFields({ name: "Average Weight", value: `${Math.round(thirtyDayAvgWeight * 10) / 10}lbs`, inline: true })
+                .addFields({ name: "Average Reps", value: `${Math.round(thirtyDayAvgReps * 10) / 10}`, inline: true })
+                .addFields({ name: "\0", value: "**__Records__**" })
+                .addFields({ name: "Most Weight", value: `${mostWeight}lbs on ${mostWeightDate}`, inline: true })
+                .addFields({ name: "Most Reps", value: `${mostReps} reps on ${mostRepsDate}`, inline: true })
+                .addFields({ name: "Best Set", value: `${bestSetWeight}lbs x ${bestSetReps} reps = ${bestTotal} on ${bestSetDate}`, inline: true })
+                .setFooter({ text: `Total Sets: ${lifetimeCount}\nSets recorded in the last 30 days: ${thirtyDayCount}`})
 
-        let averages = [];
-        let total = 0;
-        let count = 0;
-
-        for (const day of this.history) {
-            for (const set of day.getSets()) {
-                if (set.getMovement() == exercise) {
-                    total += set.getSetTotal();
-                    count++;
-                }
-            }
-            if (total == 0 && count == 0) {
-                continue;
-            } else if(total == 0) {
-                averages.push(0);
-            } else {
-                averages.push(total / count);
-            }
-            count = 0;
-            total = 0;
-        }
-
-        return averages;
+                if (callback) callback(statsEmbed);
+            });
+        });
     }
 
     // Gets the averages in data form for use in graphing
@@ -411,7 +395,10 @@ class Account{
             if (err) console.log(`Connection error: ${err}`);
             con.query(`SELECT * FROM lifts WHERE userID = '${this.id}' AND date = '${today}' ORDER BY setid DESC;`, (err2, results) => {
                 if (err2) console.log(`Query error undoing set: ${err2}`);
-                if (results.length == 0) return false;
+                if (results.length == 0) {
+                    if (callback) callback(false);
+                    return;
+                }
 
                 removeSets = removeSets > results.length ? results.length : removeSets;
 

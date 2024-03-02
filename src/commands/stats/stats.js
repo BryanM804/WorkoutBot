@@ -4,7 +4,6 @@ const { findAccount } = require("..\\..\\index.js");
 module.exports = {
     name: "stats",
     description: "See statistics for a specific movement.",
-    deleted: true,
     options: [
         {
             name: "movement",
@@ -15,7 +14,11 @@ module.exports = {
         }
     ],
     callback: (client, interaction) => {
-        interaction.reply({ embeds: [findAccount(interaction.user.username, interaction.user.id).getStats(interaction.options.get("movement").value)] });
-        console.log(`${interaction.user.username} fetched stats for their ${interaction.options.get("movement").value}.`);
+        const userAccount = findAccount(interaction.user.username, interaction.user.id);
+        
+        userAccount.getStats(interaction.options.get("movement").value, (embed) => {
+            interaction.reply({ embeds: [embed] });
+            console.log(`${interaction.user.username} fetched stats for their ${interaction.options.get("movement").value}.`);
+        });
     }
 }

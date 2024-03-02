@@ -26,12 +26,12 @@ module.exports = {
                     value: "Skip Streak"
                 },
                 {
-                    name: "Days Logged",
+                    name: "Days Logged (broken)",
                     description: "Total number of days logged",
                     value: "Days Logged"
                 },
                 {
-                    name: "Cardio Total",
+                    name: "Cardio Total (WIP)",
                     description: "Total minutes of cardio done",
                     value: "Cardio Total"
                 },
