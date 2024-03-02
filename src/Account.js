@@ -228,7 +228,7 @@ class Account{
                 con.query(`SELECT * FROM lifts WHERE userID = '${this.id}' AND date = '${date}';`, (err2, results) => {
                     if (err2) console.log(`Error reading data for history: ${err2}`);
 
-                    con.query(`SELECT * FROM labels WHERE userID = '${this.id}' AND date = '${date}';`, (err3, labels) => {
+                    con.query(`SELECT * FROM labels WHERE userID = '${this.id}' AND date = '${date}' ORDER BY labelid DESC;`, (err3, labels) => {
                         if (err3) console.log(`Error querying labels for history: ${err3}`);
 
                         let embeds = WorkoutDay.getEmbeds(results, labels.length > 0 ? labels[0].label : null);
