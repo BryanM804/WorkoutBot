@@ -69,11 +69,12 @@ class Account{
             bench = ${this.bench},
             deadlift = ${this.deadlift},
             currentsetnumber = ${this.currentSetNumber} 
-            WHERE id = '${this.id}'`, (err2, result) => {
+            WHERE id = '${this.id}'`, 
+            (err2, result) => {
                 if (err2) console.log(`Query error: ${err2}`);
                 if (logInfo) console.log(result);
-            }, (err2, result) => {
-                if (err2) console.log(`Error updating accounts: ${err2}`);
+            }, (err3, result) => {
+                if (err3) console.log(`Error updating accounts: ${err3}`);
                 if (callback) callback();
             })
         })
@@ -187,7 +188,7 @@ class Account{
                         averages.push(average);
 
                         currDate = set.date;
-                        total = new Set(set.movement, set.weight, set.reps).getSetTotal();
+                        total = new Set(set.movement, set.weight, set.reps, this.bodyweight).getSetTotal();
                         count = 1;
                     }
                 }
@@ -359,7 +360,7 @@ class Account{
             con.query(`SELECT * FROM lifts WHERE userID = '${this.id}' AND date = '${today}' ORDER BY setid DESC;`, (err2, sets) => {
                 if (err2) console.log(`Querying error in repeat set: ${err2}`);
 
-                if (sets.length > 1) {
+                if (sets.length > 0) {
                     const lastSet = new Set(sets[0].movement, sets[0].weight, sets[0].reps, this.bodyweight);
                     repeatWeight = weight ? weight : lastSet.getWeight();
                     repeatReps = reps ? reps : lastSet.getReps();
