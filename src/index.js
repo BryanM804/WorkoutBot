@@ -1,12 +1,10 @@
 const Account = require(".\\Account.js");
-const { HelpEmbed } = require("./utils/Embeds.js");
 const { Client, IntentsBitField } = require("discord.js");
 const fs = require("fs");
 const sql = require("mysql2");
 const eventHandler = require(".\\handlers\\eventHandler");
 const getAllFiles = require(".\\utils\\getAllFiles.js")
 const createConnection = require(".\\createConnection.js");
-const { ExerciseList, getExerciseList } = require("./utils/Exercises.js");
 require("dotenv").config();
 
 //To do list:
@@ -60,35 +58,43 @@ con.connect((err) => {
 // TO BE REWRITTEN
 //Checking if Users skipped a day
 function checkSkips(){
-    if (new Date().getHours() >= 23) {
-        for (let i = 0; i < accounts.length; i++) {
-            if (accounts[i].getHistory().length < 1) continue;
+    if (!(new Date().getHours() >= 23)) return;
 
-            const lastWorkout = new Date(accounts[i].getHistory()[accounts[i].getHistory().length - 1].getDate());
-            let daysSkipped = 0;
-            let tempDate = new Date(Date.parse(new Date().toDateString())); //Removing the ms from the date (possibly very foolish)
+    for (let i = 0; i < accounts.length; i++) {
+        if (accounts[i].currentSetNumber < 2) continue;
 
-            while (parseInt((tempDate.getTime() - lastWorkout.getTime()) / 86400000) != 0) {
-                restDay = false;
+        con.connect((err) => {
+            if (err) console.log(`Connection error checking skips: ${err}`);
 
-                for (let j = 0; j < accounts[i].getRestDays().length; j++) {
-                    if(tempDate.getDay() == accounts[i].getRestDays()[j]){
-                        restDay = true;
+            con.query(`SELECT date FROM lifts WHERE setnumber = ${accounts[i].currentSetNumber} AND userID = '${accounts[i].id}';`, (err2, lastSet) => {
+                if (err2) console.log(`Query error checking skips: ${err2}`);
+
+                const lastDate = new Date(lastSet.date);
+                let daysSkipped = 0;
+                let tempDate = new Date(Date.parse(new Date().toDateString())); // removes ms from date
+
+                while (parseInt((tempDate.getTime() - lastWorkout.getTime()) / 86400000) != 0) {
+                    restDay = false;
+        
+                    for (let j = 0; j < accounts[i].restDays.length; j++) {
+                        if(tempDate.getDay() == accounts[i].restDays[j]){
+                            restDay = true;
+                        }
+                    }
+        
+                    tempDate.setTime(tempDate.getTime() - 86400000);
+        
+                    if(!restDay) daysSkipped++;
+                }
+        
+                if (daysSkipped > 0) {
+                    while (accounts[i].skipStreak != daysSkipped) {
+                        console.log(`${accounts[i].getName()} Skipped.`)
+                        accounts[i].skipDay();
                     }
                 }
-
-                tempDate.setTime(tempDate.getTime() - 86400000);
-
-                if(!restDay) daysSkipped++;
-            }
-
-            if (daysSkipped > 0) {
-                while (accounts[i].getSkipStreak() != daysSkipped) {
-                    console.log(`${accounts[i].getName()} Skipped.`)
-                    accounts[i].skipDay();
-                }
-            }
-        }
+            });
+        });
     }
 }
 
@@ -110,7 +116,7 @@ const findAccount = function(name, id, createNew = true){
             return accounts[i];
         }
     }
-    if (createNew) { // Create new wont work properly for the time being
+    if (createNew) { 
         accounts.push(new Account(name, id));
         return accounts[accounts.length - 1];
     } else {
@@ -194,10 +200,8 @@ const sortAccounts = function(sortby, callback) {
 
 try {
     client.on("ready", (c) => {
-        //setInterval(makeBackup, 14400000);//Backup every 4 hours
-        //setInterval(checkSkips, 900000);//Checks every 15 minutes
-        //makeBackup();
-        //checkSkips();
+        setInterval(checkSkips, 900000);//Checks every 15 minutes
+        checkSkips();
         clearGraphs();
     });
 } catch (interactionError) {

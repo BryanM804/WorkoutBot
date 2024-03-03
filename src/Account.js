@@ -445,29 +445,16 @@ class Account{
     }
 
     getTotalDays(callback){
-        let currDate;
-        let dateCount;
-
         con.connect((err) => {
             if (err) console.log(`Connection error getting total days: ${err}`);
-            con.query(`SELECT date FROM lifts WHERE userID = '${this.id}' ORDER BY date;`, (err2, allDates) => {
+            con.query(`SELECT DISTINCT date FROM lifts WHERE userID = '${this.id}' ORDER BY date;`, (err2, allDates) => {
                 if (allDates.length < 1) {
                     this.totalDays = 0;
                     return;
                 }
 
-                currDate = allDates[0].date;
-                dateCount = 1;
-
-                for (const date of allDates) {
-                    if (date.date != currDate) {
-                        currDate = date.date;
-                        dateCount++;
-                    }
-                }
-
-                this.totalDays = dateCount; // This method would always be called before this needs to be displayed
-                if (callback) callback(dateCount);
+                this.totalDays = allDates.length; // This method would always be called before this needs to be displayed
+                if (callback) callback(allDates.length);
             });
         });
     }
