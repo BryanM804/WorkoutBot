@@ -55,11 +55,10 @@ con.connect((err) => {
     }
 });
 
-// TO BE REWRITTEN
+
 //Checking if Users skipped a day
 function checkSkips(){
     if (!(new Date().getHours() >= 23)) return;
-
     for (let i = 0; i < accounts.length; i++) {
         if (accounts[i].currentSetNumber < 2) continue;
 
@@ -68,12 +67,13 @@ function checkSkips(){
 
             con.query(`SELECT date FROM lifts WHERE setnumber = ${accounts[i].currentSetNumber} AND userID = '${accounts[i].id}';`, (err2, lastSet) => {
                 if (err2) console.log(`Query error checking skips: ${err2}`);
+                if (!lastSet[0]) return;
 
-                const lastDate = new Date(lastSet.date);
+                const lastDate = new Date(lastSet[0].date);
                 let daysSkipped = 0;
                 let tempDate = new Date(Date.parse(new Date().toDateString())); // removes ms from date
 
-                while (parseInt((tempDate.getTime() - lastWorkout.getTime()) / 86400000) != 0) {
+                while (parseInt((tempDate.getTime() - lastDate.getTime()) / 86400000) != 0) {
                     restDay = false;
         
                     for (let j = 0; j < accounts[i].restDays.length; j++) {
@@ -88,8 +88,8 @@ function checkSkips(){
                 }
         
                 if (daysSkipped > 0) {
-                    while (accounts[i].skipStreak != daysSkipped) {
-                        console.log(`${accounts[i].getName()} Skipped.`)
+                    while (accounts[i].skipStreak < daysSkipped) {
+                        console.log(`${accounts[i].name} Skipped.`)
                         accounts[i].skipDay();
                     }
                 }
