@@ -3,7 +3,7 @@ const { createPNGStream } = require("canvas");
 const fs = require("fs");
 
 module.exports = (data, fileNum, callback) => {
-    if (data.length < 1) {
+    if (data.length < 2) {
         if (callback) callback(false);
         return;
     }

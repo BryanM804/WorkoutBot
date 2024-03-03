@@ -6,6 +6,7 @@ const sql = require("mysql2");
 const eventHandler = require(".\\handlers\\eventHandler");
 const getAllFiles = require(".\\utils\\getAllFiles.js")
 const createConnection = require(".\\createConnection.js");
+const { ExerciseList, getExerciseList } = require("./utils/Exercises.js");
 require("dotenv").config();
 
 //To do list:
@@ -27,6 +28,19 @@ const con = createConnection(); // gitignored so you don't see my password :P
 
 //Creating account objects for each user file when the bot starts
 let accounts = []
+let exerciseList = [];
+
+con.connect((err) => {
+    if (err) console.log(`Error connecting for exercise list: ${err}`);
+
+    con.query(`SELECT movement FROM exercises`, (err2, movements) => {
+        if (err2) console.log(`Error fetching exercise list: ${err2}`);
+        
+        for (const movement of movements) {
+            exerciseList.push(movement.movement);
+        }
+    });
+});
 
 // In large scale it would be very inefficient to have every account loaded to memory.
 // However in its current state this project is meant to be a private bot for my friends only.
@@ -105,7 +119,7 @@ const findAccount = function(name, id, createNew = true){
 }
 
 //Sorts accounts array by the type specified
-const sortAccounts = function(sortby) {
+const sortAccounts = function(sortby, callback) {
     switch (sortby) {
         case "Level":
             accounts.sort((a, b) => {
@@ -127,9 +141,21 @@ const sortAccounts = function(sortby) {
             });
             break;
         case "Days Logged":
-            accounts.sort((a, b) => {
-                return b.getTotalDays() - a.getTotalDays();
-            });
+            let callNum = 1;
+
+            for (let i = 0; i < accounts.length; i++) {
+                accounts[i].getTotalDays((total) => {
+                    if (callNum == accounts.length - 1) {
+                        accounts.sort((a, b) => {
+                            return (b.totalDays - a.totalDays);
+                        });
+
+                        if (callback) callback(accounts);
+                    } else {
+                        callNum++;
+                    }
+                });
+            }
             break;
         case "Cardio Total":
             accounts.sort((a, b) => {
@@ -163,7 +189,7 @@ const sortAccounts = function(sortby) {
             break;
     }
 
-    return accounts;
+    if (callback && sortby != "Days Logged") callback(accounts);
 }
 
 try {
@@ -178,5 +204,5 @@ try {
     console.error(interactionError);
 }
 
-module.exports = { findAccount, sortAccounts };
+module.exports = { findAccount, sortAccounts, exerciseList };
 client.login(process.env.TOKEN);

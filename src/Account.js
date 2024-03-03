@@ -110,7 +110,7 @@ class Account{
                 let dateCount = 1;
 
                 for (let set of sets) {
-                    let total = new Set(set.movement, set.weight, set.reps, this.bodyweight).getSetTotal()
+                    let total = Set.getSetTotal(set.movement, set.weight, set.reps, this.bodyweight);
 
                     if (set.date != currDate) {
                         currDate = set.date;
@@ -178,7 +178,7 @@ class Account{
                 let currDate = sets[0].date;
                 for (let set of sets) {
                     if (set.date == currDate) {
-                        total += new Set(set.movement, set.weight, set.reps).getSetTotal();
+                        total += set.settotal != null ? set.settotal : Set.getSetTotal(set.movement, set.weight, set.reps, this.bodyweight);
                         count++;
                     } else {
                         let average = {
@@ -188,7 +188,7 @@ class Account{
                         averages.push(average);
 
                         currDate = set.date;
-                        total = new Set(set.movement, set.weight, set.reps, this.bodyweight).getSetTotal();
+                        total = set.settotal != null ? set.settotal : Set.getSetTotal(set.movement, set.weight, set.reps, this.bodyweight);
                         count = 1;
                     }
                 }
@@ -326,13 +326,14 @@ class Account{
 
         con.connect((err) => {
             if (err) console.log(`Connection error: ${err}`);
-            con.query(`INSERT INTO lifts (userID, movement, weight, reps, date, setnumber) VALUES (
+            con.query(`INSERT INTO lifts (userID, movement, weight, reps, date, setnumber, settotal) VALUES (
                 '${this.id}',
                 '${movement}',
                 ${weight},
                 ${reps},
                 '${today}',
-                ${this.currentSetNumber}
+                ${this.currentSetNumber},
+                ${Set.getSetTotal(movement, weight, reps, this.bodyweight)}
             )`, (err2, results) => {
                 if (err2) console.log(`Error inserting new set: ${err2}`);
 
@@ -362,16 +363,16 @@ class Account{
 
                 if (sets.length > 0) {
                     const lastSet = new Set(sets[0].movement, sets[0].weight, sets[0].reps, this.bodyweight);
-                    repeatWeight = weight ? weight : lastSet.getWeight();
-                    repeatReps = reps ? reps : lastSet.getReps();
+                    repeatWeight = weight ? weight : lastSet.weight;
+                    repeatReps = reps ? reps : lastSet.reps;
 
                     for (let i = 0; i < repeats - 1; i++) {
-                        this.logSet(lastSet.getMovement(), repeatWeight, repeatReps);
+                        this.logSet(lastSet.movement, repeatWeight, repeatReps);
                     }
 
                     // I want the callback for the last one.
-                    this.logSet(lastSet.getMovement(), repeatWeight, repeatReps, () => {
-                        if (callback) callback(new Set(lastSet.getMovement(), repeatWeight, repeatReps, this.bodyweight));
+                    this.logSet(lastSet.movement, repeatWeight, repeatReps, () => {
+                        if (callback) callback(new Set(lastSet.movement, repeatWeight, repeatReps, this.bodyweight));
                     });
                 } else {
                     if (callback) callback(false);
@@ -443,8 +444,32 @@ class Account{
         });
     }
 
-    getTotalDays(){
-        return this.history.length;
+    getTotalDays(callback){
+        let currDate;
+        let dateCount;
+
+        con.connect((err) => {
+            if (err) console.log(`Connection error getting total days: ${err}`);
+            con.query(`SELECT date FROM lifts WHERE userID = '${this.id}' ORDER BY date;`, (err2, allDates) => {
+                if (allDates.length < 1) {
+                    this.totalDays = 0;
+                    return;
+                }
+
+                currDate = allDates[0].date;
+                dateCount = 1;
+
+                for (const date of allDates) {
+                    if (date.date != currDate) {
+                        currDate = date.date;
+                        dateCount++;
+                    }
+                }
+
+                this.totalDays = dateCount; // This method would always be called before this needs to be displayed
+                if (callback) callback(dateCount);
+            });
+        });
     }
     getTotal(){
         return this.squat + this.bench + this.deadlift;

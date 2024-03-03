@@ -1,4 +1,6 @@
-module.exports.ExerciseList = [
+// Useless now
+
+/*[
     //Chest
     "Barbell Bench Press", "Dumbbell Bench Press", "Chest Press Machine",
     "Incline Barbell Bench Press", "Incline Dumbbell Bench Press", "Incline Chest Press Machine",
@@ -14,7 +16,7 @@ module.exports.ExerciseList = [
     "Lat Pulldown", "Lat Pullover", "Single Arm Pulldown",
     "Barbell Row", "T Bar Row", "Landmine", "Back Extension", "Hammer Strength Machine High Row",
     "Machine Row", "Machine Pulldown", "Cable Row", "Barbell Shrug",
-    "Dumbbell Shrug", "Machine Shrug", "Hammer Strength Machine Row",
+    "Dumbbell Shrug", "Machine Shrug", "Hammer Strength Machine Row", "Hammer Strength Machine Low Row",
     //Rear Delts
     "Face Pull", "Dumbbell Rear Delt Fly",
     "Machine Rear Delt Fly", "Rear Delt Ski", "Dumbbell Rear Delt Ski",
@@ -35,4 +37,4 @@ module.exports.ExerciseList = [
     "Dumbbell Bicep Curl", "Hammer Curl", "Zottman Curl",
     "Barbell Bicep Curl", "Preacher Curl", "Bicep Curl Machine", "Preacher Curl Machine",
     "Reverse Curl", "Cable Curl", "Forearm Curl", "Wrist Roller", "Dumbbell Preacher Curl"
-];
+];*/

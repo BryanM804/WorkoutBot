@@ -23,7 +23,7 @@ class WorkoutDay{
                 dayEmbeds.push(new EmbedBuilder().setTitle(`${sets[0].date} Page ${embedNum + 1}`));
             }
             dayEmbeds[embedNum].addFields({ name: sets[i].movement, value: `${sets[i].weight}lbs for ${sets[i].reps} reps`, inline: true});
-            total += new Set(sets[i].movement, sets[i].weight, sets[i].reps).getSetTotal();
+            total += sets[i].settotal;
         }
 
         dayEmbeds[embedNum].setFooter({ text: `Total Weight: ${total}lbs | Total Sets: ${sets.length}`});

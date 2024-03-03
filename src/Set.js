@@ -29,21 +29,8 @@ class Set{
         return xpAmount;
     }
 
-    getMovement(){
-        return this.movement;
-    }
-    getWeight(){
-        return this.weight;
-    }
-    getReps(){
-        return this.reps;
-    }
-    getSetTotal(){
-        return Set.getXPAmount(this.movement, this.weight, this.reps, this.bodyweight) - 100;
-    }
-
-    toString(){
-        return (`${this.movement}: ${this.weight}lbs ${this.reps} reps`)
+    static getSetTotal(movement, weight, reps, bodyweight = 0){
+        return Set.getXPAmount(movement, weight, reps, bodyweight) - 100;
     }
 }
 
