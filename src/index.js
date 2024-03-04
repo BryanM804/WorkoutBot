@@ -25,7 +25,7 @@ eventHandler(client);
 const con = createConnection(); // gitignored so you don't see my password :P
 
 //Creating account objects for each user file when the bot starts
-let accounts = []
+let accounts = [];
 let exerciseList = [];
 
 con.connect((err) => {

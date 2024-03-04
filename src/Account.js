@@ -98,13 +98,18 @@ class Account{
         con.connect((err) => {
             if (err) console.log(`Connection error getting stats: ${err}`);
 
-            // If this originated as a database I could have sorted by setid but that is all messed up.
             con.query(`SELECT * FROM lifts WHERE userID = '${this.id}' AND movement = '${movement}' ORDER BY setnumber DESC`, (err2, sets) => {
                 if (err2) console.log(`Querying error getting stats: ${err2}`);
                 if (!sets) {
                     if (callback) callback(new EmbedBuilder().setTitle(`No data logged for ${movement}`));
                     return;
                 }
+
+                sets.sort((a, b) => {
+                    const aDate = Date.parse(a.date);
+                    const bDate = Date.parse(b.date);
+                    return aDate - bDate;
+                })
 
                 let currDate = sets[0].date;
                 let dateCount = 1;
@@ -171,9 +176,14 @@ class Account{
         con.connect((err) => {
             if (err) console.log(`Connection error getting avgs: ${err}`);
 
-            // If this originated as a database I could have sorted by setid but that is all messed up.
-            con.query(`SELECT * FROM lifts WHERE userID = '${this.id}' AND movement = '${exercise}' ORDER BY setnumber ASC`, (err2, sets) => {
+            con.query(`SELECT * FROM lifts WHERE userID = '${this.id}' AND movement = '${exercise}' ORDER BY setnumber DESC`, (err2, sets) => {
                 if (err2) console.log(`Querying error getting avgs: ${err2}`);
+
+                sets.sort((a, b) => {
+                    const aDate = Date.parse(a.date);
+                    const bDate = Date.parse(b.date);
+                    return aDate - bDate;
+                });
 
                 let currDate = sets[0].date;
                 for (let set of sets) {
@@ -317,8 +327,14 @@ class Account{
         });
     }
 
-    logSet(movement, weight, reps, callback){
-        let today = new Date().toDateString();
+    logSet(movement, weight, reps, date, callback){
+        let today;
+
+        if (date) {
+            today = date;
+        } else {
+            today = new Date().toDateString();
+        }
         
         this.xp += Set.getXPAmount(movement, weight, reps, this.bodyweight);
         
@@ -353,12 +369,11 @@ class Account{
 
     
     repeatSet(weight, reps, repeats, callback){
-        let today = new Date().toDateString();
         let repeatWeight, repeatReps;
 
         con.connect((err) => {
             if (err) console.log(`Connection error in repeat set: ${err}`);
-            con.query(`SELECT * FROM lifts WHERE userID = '${this.id}' AND date = '${today}' ORDER BY setid DESC;`, (err2, sets) => {
+            con.query(`SELECT * FROM lifts WHERE userID = '${this.id}' ORDER BY setid DESC;`, (err2, sets) => {
                 if (err2) console.log(`Querying error in repeat set: ${err2}`);
 
                 if (sets.length > 0) {
@@ -367,11 +382,11 @@ class Account{
                     repeatReps = reps ? reps : lastSet.reps;
 
                     for (let i = 0; i < repeats - 1; i++) {
-                        this.logSet(lastSet.movement, repeatWeight, repeatReps);
+                        this.logSet(lastSet.movement, repeatWeight, repeatReps, sets[0].date);
                     }
 
                     // I want the callback for the last one.
-                    this.logSet(lastSet.movement, repeatWeight, repeatReps, () => {
+                    this.logSet(lastSet.movement, repeatWeight, repeatReps, sets[0].date, () => {
                         if (callback) callback(new Set(lastSet.movement, repeatWeight, repeatReps, this.bodyweight));
                     });
                 } else {
@@ -388,14 +403,13 @@ class Account{
     }
 
     undoSet(sets, callback){
-        let today = new Date().toDateString();
 
         let removeSets = sets || 1;
         if(removeSets <= 0) removeSets = 1;
 
         con.connect((err) => {
             if (err) console.log(`Connection error: ${err}`);
-            con.query(`SELECT * FROM lifts WHERE userID = '${this.id}' AND date = '${today}' ORDER BY setid DESC;`, (err2, results) => {
+            con.query(`SELECT * FROM lifts WHERE userID = '${this.id}' ORDER BY setid DESC;`, (err2, results) => {
                 if (err2) console.log(`Query error undoing set: ${err2}`);
                 if (results.length == 0) {
                     if (callback) callback(false);
@@ -458,6 +472,7 @@ class Account{
             });
         });
     }
+
     getTotal(){
         return this.squat + this.bench + this.deadlift;
     }

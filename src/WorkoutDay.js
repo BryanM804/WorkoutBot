@@ -1,5 +1,6 @@
 const Set = require(".\\Set.js");
 const { EmbedBuilder } = require("discord.js");
+
 class WorkoutDay{
 
     static getEmbeds(sets, label){
@@ -12,7 +13,7 @@ class WorkoutDay{
 
         if (label) {
             dayEmbeds[0].setTitle(label)
-            .setAuthor({ name: sets[0].date});
+            .setAuthor({ name: sets[0].date });
         } else {
             dayEmbeds[0].setTitle(sets[0].date);
         }
@@ -27,6 +28,7 @@ class WorkoutDay{
         }
 
         dayEmbeds[embedNum].setFooter({ text: `Total Weight: ${total}lbs | Total Sets: ${sets.length}`});
+
         return dayEmbeds;
     }
 }
