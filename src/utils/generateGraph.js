@@ -2,16 +2,29 @@ const vega = require("vega");
 const { createPNGStream } = require("canvas");
 const fs = require("fs");
 
-module.exports = (data, fileNum, callback) => {
+module.exports = (data, fileNum, type, callback) => {
     if (data.length < 2) {
         if (callback) callback(false);
         return;
     }
 
+    let title;
+    switch (type) {
+        case "strength":
+            title = "Max Weight";
+            break;
+        case "sets":
+            title = "Average Set Total";
+            break;
+        default:
+            title = "Average Set Total";
+            break;
+    }
+
     let tableValues = [];
 
     for (let i = 0; i < data.length; i++) {
-        tableValues.push({ "x": data[i].day, "y": data[i].avg })
+        tableValues.push({ "x": data[i].day, "y": data[i].val })
     }
 
     const graph = {
@@ -55,7 +68,7 @@ module.exports = (data, fileNum, callback) => {
             },
             {
                 "orient": "left",
-                "title": "Average Set Total",
+                "title": title,
                 "scale": "y"
             }
         ],
