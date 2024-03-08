@@ -397,7 +397,11 @@ class Account{
                 ${this.currentSetNumber},
                 ${Set.getSetTotal(movement, weight, reps, this.bodyweight)}
             )`, (err2, results) => {
-                if (err2) console.log(`Error inserting new set: ${err2}`);
+                // This should throw an error or else the accounts and lifts tables will desync (ask me how I know)
+                if (err2) {
+                    console.log(`Error inserting new set`);
+                    throw err2;
+                }
 
                 // Level up loop
                 while (this.xp >= this.level * 1500) {
