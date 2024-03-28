@@ -3,3 +3,4 @@ accounts
 backup
 graphs
 createConnection.js
+.env
