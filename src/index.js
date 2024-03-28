@@ -109,7 +109,7 @@ function clearGraphs() {
 }
 
 
-//Returns the Account from the array of accounts that matches the name and id
+// Returns the Account from the array of accounts that matches the name and id
 const findAccount = function(name, id, createNew = true){
     for (let i = 0; i < accounts.length; i++) {
         if (accounts[i].id === id) {
@@ -124,7 +124,7 @@ const findAccount = function(name, id, createNew = true){
     }
 }
 
-//Sorts accounts array by the type specified
+// Sorts accounts array by the type specified
 const sortAccounts = function(sortby, callback) {
     switch (sortby) {
         case "Level":

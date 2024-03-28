@@ -100,7 +100,7 @@ class Account{
 
             con.query(`SELECT * FROM lifts WHERE userID = '${this.id}' AND movement = '${movement}' ORDER BY setnumber DESC`, (err2, sets) => {
                 if (err2) console.log(`Querying error getting stats: ${err2}`);
-                if (!sets) {
+                if (sets.length < 1) {
                     if (callback) callback(new EmbedBuilder().setTitle(`No data logged for ${movement}`));
                     return;
                 }
