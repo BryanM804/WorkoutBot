@@ -55,25 +55,6 @@ con.connect((err) => {
     }
 });
 
-
-// con.connect((err) => {
-//     if (err) console.error(err);
-
-//     con.query(`SELECT * FROM lifts;`, (err2, results) => {
-//         if (err2) console.error(err2);
-
-//         for (const set of results) {
-//             const dateValue = Date.parse(set.date);
-
-//             con.query(`UPDATE lifts SET dateval = ${dateValue} WHERE setid = ${set.setid}`, (err3, res) => {
-//                 if (err3) console.error(err3);
-
-//                 console.log(`Updated set ${set.setid}`);
-//             })
-//         }
-//     })
-// })
-
 //Checking if Users skipped a day
 function checkSkips(){
     if (!(new Date().getHours() >= 23)) return;
