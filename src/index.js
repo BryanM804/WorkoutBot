@@ -83,7 +83,7 @@ function checkSkips(){
         con.connect((err) => {
             if (err) console.log(`Connection error checking skips: ${err}`);
 
-            con.query(`SELECT date FROM lifts WHERE setnumber = ${accounts[i].currentSetNumber} AND userID = '${accounts[i].id}';`, (err2, lastSet) => {
+            con.query(`SELECT date FROM lifts WHERE userID = '${accounts[i].id}' ORDER BY dateval DESC, setid DESC;`, (err2, lastSet) => {
                 if (err2) console.log(`Query error checking skips: ${err2}`);
                 if (!lastSet[0]) return;
 
