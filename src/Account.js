@@ -31,15 +31,14 @@ class Account{
                     this.squat = profile.squat;
                     this.bench = profile.bench;
                     this.deadlift = profile.deadlift;
-                    this.currentSetNumber = profile.currentsetnumber;
 
                     if (this.restDays.length > 0) this.restDays.pop(); // Split leaves a '' in the array
 
                     if (callback) callback(true);
                 } else {
                     // Make a new account in the db
-                    con.query(`INSERT INTO accounts (id, name, bodyweight, level, xp, creationDate, skiptotal, skipstreak, squat, bench, deadlift, currentsetnumber) VALUES (
-                        '${this.id}', '${this.name}', 0, 1, 0, '${new Date().toDateString()}', 0, 0, 0, 0, 0, 1)`, (err2, result) => {
+                    con.query(`INSERT INTO accounts (id, name, bodyweight, level, xp, creationDate, skiptotal, skipstreak, squat, bench, deadlift) VALUES (
+                        '${this.id}', '${this.name}', 0, 1, 0, '${new Date().toDateString()}', 0, 0, 0, 0, 0)`, (err2, result) => {
                             if (err2) console.log(`Query error creating account: ${err2}`);
                             if (callback) callback(false);
                         })
@@ -67,8 +66,7 @@ class Account{
             restdays = '${restDaysString}',
             squat = ${this.squat},
             bench = ${this.bench},
-            deadlift = ${this.deadlift},
-            currentsetnumber = ${this.currentSetNumber} 
+            deadlift = ${this.deadlift}
             WHERE id = '${this.id}'`, 
             (err2, result) => {
                 if (err2) console.log(`Query error: ${err2}`);
@@ -98,7 +96,7 @@ class Account{
         con.connect((err) => {
             if (err) console.log(`Connection error getting stats: ${err}`);
 
-            con.query(`SELECT * FROM lifts WHERE userID = '${this.id}' AND movement = '${movement}' ORDER BY setnumber DESC`, (err2, sets) => {
+            con.query(`SELECT * FROM lifts WHERE userID = '${this.id}' AND movement = '${movement}' ORDER BY dateval DESC`, (err2, sets) => {
                 if (err2) console.log(`Querying error getting stats: ${err2}`);
                 if (sets.length < 1) {
                     if (callback) callback(new EmbedBuilder().setTitle(`No data logged for ${movement}`));
@@ -176,7 +174,7 @@ class Account{
         con.connect((err) => {
             if (err) console.log(`Connection error getting avgs: ${err}`);
 
-            con.query(`SELECT * FROM lifts WHERE userID = '${this.id}' AND movement = '${exercise}' ORDER BY setnumber DESC`, (err2, sets) => {
+            con.query(`SELECT * FROM lifts WHERE userID = '${this.id}' AND movement = '${exercise}' ORDER BY dateval DESC`, (err2, sets) => {
                 if (err2) console.log(`Querying error getting avgs: ${err2}`);
 
                 sets.sort((a, b) => {
@@ -221,7 +219,7 @@ class Account{
         con.connect((err) => {
             if (err) console.log(`Connection error getting maxes: ${err}`);
 
-            con.query(`SELECT * FROM lifts WHERE userID = '${this.id}' AND movement = '${exercise}' ORDER BY setnumber DESC`, (err2, sets) => {
+            con.query(`SELECT * FROM lifts WHERE userID = '${this.id}' AND movement = '${exercise}' ORDER BY dateval DESC`, (err2, sets) => {
                 if (err2) console.log(`Querying error getting maxes: ${err2}`);
 
                 sets.sort((a, b) => {
@@ -383,19 +381,17 @@ class Account{
         }
         
         this.xp += Set.getXPAmount(movement, weight, reps, this.bodyweight);
-        
-        this.currentSetNumber++;
 
         con.connect((err) => {
             if (err) console.log(`Connection error: ${err}`);
-            con.query(`INSERT INTO lifts (userID, movement, weight, reps, date, setnumber, settotal) VALUES (
+            con.query(`INSERT INTO lifts (userID, movement, weight, reps, date, settotal, dateval) VALUES (
                 '${this.id}',
                 '${movement}',
                 ${weight},
                 ${reps},
                 '${today}',
-                ${this.currentSetNumber},
-                ${Set.getSetTotal(movement, weight, reps, this.bodyweight)}
+                ${Set.getSetTotal(movement, weight, reps, this.bodyweight)},
+                ${Date.parse(today)}
             )`, (err2, results) => {
                 // This should throw an error or else the accounts and lifts tables will desync (ask me how I know)
                 if (err2) {
@@ -423,7 +419,7 @@ class Account{
 
         con.connect((err) => {
             if (err) console.log(`Connection error in repeat set: ${err}`);
-            con.query(`SELECT * FROM lifts WHERE userID = '${this.id}' ORDER BY setid DESC;`, (err2, sets) => {
+            con.query(`SELECT * FROM lifts WHERE userID = '${this.id}' ORDER BY dateval DESC, setid DESC;`, (err2, sets) => {
                 if (err2) console.log(`Querying error in repeat set: ${err2}`);
 
                 if (sets.length > 0) {
@@ -459,7 +455,7 @@ class Account{
 
         con.connect((err) => {
             if (err) console.log(`Connection error: ${err}`);
-            con.query(`SELECT * FROM lifts WHERE userID = '${this.id}' ORDER BY setid DESC;`, (err2, results) => {
+            con.query(`SELECT * FROM lifts WHERE userID = '${this.id}' ORDER BY dateval DESC, setid DESC;`, (err2, results) => {
                 if (err2) console.log(`Query error undoing set: ${err2}`);
                 if (results.length == 0) {
                     if (callback) callback(false);
@@ -481,7 +477,6 @@ class Account{
                             this.xp += this.level * 1500;
                         }
 
-                        this.currentSetNumber--;
                         this.writeStatsToDB();
                     });
                 }
