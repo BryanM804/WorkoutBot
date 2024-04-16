@@ -5,6 +5,7 @@ module.exports = {
     //testOnly: boolean,
     //deleted: boolean,
     callback: (client, interaction) => {
-        interaction.reply({ content: "http://72.68.45.172:5500/ please don't hack me thanks." });
+        interaction.reply({ content: "http://www.lifterslog.online/" });
+        console.log("Site link requested.")
     }
 }
