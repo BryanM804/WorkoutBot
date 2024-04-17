@@ -373,7 +373,7 @@ class Account{
 
     logSet(movement, weight, reps, date, callback){
         let today;
-        let time = new Date().toLocaleDateString("en-US");
+        let time = new Date().toLocaleTimeString("en-US");
 
         if (date) {
             today = date;
