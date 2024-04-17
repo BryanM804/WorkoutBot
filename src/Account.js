@@ -373,6 +373,7 @@ class Account{
 
     logSet(movement, weight, reps, date, callback){
         let today;
+        let time = new Date().toLocaleDateString("en-US");
 
         if (date) {
             today = date;
@@ -384,14 +385,15 @@ class Account{
 
         con.connect((err) => {
             if (err) console.log(`Connection error: ${err}`);
-            con.query(`INSERT INTO lifts (userID, movement, weight, reps, date, settotal, dateval) VALUES (
+            con.query(`INSERT INTO lifts (userID, movement, weight, reps, date, settotal, dateval, time) VALUES (
                 '${this.id}',
                 '${movement}',
                 ${weight},
                 ${reps},
                 '${today}',
                 ${Set.getSetTotal(movement, weight, reps, this.bodyweight)},
-                ${Date.parse(today)}
+                ${Date.parse(today)},
+                '${time}'
             )`, (err2, results) => {
                 // This should throw an error or else the accounts and lifts tables will desync (ask me how I know)
                 if (err2) {
