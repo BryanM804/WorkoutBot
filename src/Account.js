@@ -183,6 +183,8 @@ class Account{
                     return aDate - bDate;
                 });
 
+                if (sets.length == 0) return;
+
                 let currDate = sets[0].date;
                 for (let set of sets) {
                     if (set.date == currDate) {
