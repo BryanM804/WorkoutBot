@@ -446,6 +446,134 @@ class Account{
         });
     }
 
+    logCardio(movement, time, date, note, distance, callback) {
+        let today;
+        let localTime = new Date().toLocaleTimeString("en-US");
+
+        if (date) {
+            today = date;
+        } else {
+            today = new Date().toDateString();
+        }
+
+        con.connect((err) => {
+            if (err) console.log(`Connection error logging cardio: ${err}`);
+            
+            con.query(`INSERT INTO cardio (userid, movement, cardiotime, date, time, note, distance) VALUES (
+                '${this.id}',
+                '${movement}',
+                ${time},
+                '${today}',
+                '${localTime}',
+                '${note}',
+                '${distance}'
+            )`, (err2, results) => {
+                if (err2) {
+                    console.log(`Error inserting cardio: ${err2}`);
+                    throw err2;
+                }
+
+                this.xp += (25 * time) + 100;
+
+                // Level up loop
+                while (this.xp >= this.level * 1500) {
+                    this.xp -= (this.level * 1500);
+                    this.level++;
+                    console.log(`${this.name} leveled up to ${this.level}`);
+                }
+                
+                this.writeStatsToDB();
+                if (callback) callback()
+            });
+        });
+    }
+
+    getBreakdown(date, callback) {
+        let today;
+        if (date) {
+            today = date;
+        } else {
+            today = new Date().toDateString();
+        }
+
+        con.connect((err) => {
+            if (err) console.log(`Connection error getting sets breakdown: ${err}`);
+            
+            con.query(`SELECT * FROM lifts WHERE userID = '${this.id}' AND date = '${today}';`, (err2, results) => {
+                if (err2) console.log(`Error getting sets for breakdown:\n ${err2}`);
+
+                con.query(`SELECT * FROM exercises;`, (err3, movements) => {
+                    if (err3) console.log(`Error getting movements for breakdown:\n ${err3}`)
+
+                    let groups = []
+                    let counts = []
+
+                    for (const set of results) {
+                        const movement = set.movement;
+                        for (const inclMovement of movements) {
+                            if (movement == inclMovement.movement) {
+                                let has = false;
+                                // console.log(`${movement} == ${inclMovement}, ${inclMovement.mgroup}`);
+
+                                for (let i = 0; i < groups.length; i++) {
+                                    if (groups[i] == inclMovement.mgroup) {
+                                        counts[i]++;
+                                        has = true;
+                                        break;
+                                    }
+                                }
+
+                                if (!has) {
+                                    groups.push(inclMovement.mgroup);
+                                    counts.push(1);
+                                }
+                            }
+                        }
+                    }
+
+                    let breakdownStr = ``;
+                    for (let i = 0; i < groups.length; i++) {
+                        breakdownStr += `${groups[i]}: ${counts[i]} sets\n`
+                    }
+
+                    if (callback) callback(breakdownStr)
+                })
+            })
+        })
+    }
+
+    getCardio(date, callback) {
+        let today;
+        if (date) {
+            today = date;
+        } else {
+            today = new Date().toDateString();
+        }
+
+        con.connect((err) => {
+            if (err) console.log(`Connection error getting sets breakdown: ${err}`);
+            
+            con.query(`SELECT * FROM cardio WHERE userid = '${this.id}' AND date = '${today}';`, (err2, results) => {
+                if (err2) console.log(`Error getting sets for breakdown:\n ${err2}`);
+
+                let cardioStr = ``;
+
+                for (const cardioSet of results) {
+                    if (cardioSet.note == "" && cardioSet.distance == "0.0")
+                        cardioStr += `${cardioSet.movement} for ${cardioSet.cardiotime} minutes\n`;
+                    else if (cardioSet.note == "")
+                        cardioStr += `${cardioSet.movement} for ${cardioSet.cardiotime} minutes and ${cardioSet.distance} miles\n`;
+                    else if (cardioSet.distance == "0.0")
+                        cardioStr += `${cardioSet.movement} for ${cardioSet.cardiotime} minutes\n- ${cardioSet.note}\n`;
+                    else
+                        cardioStr += `${cardioSet.movement} for ${cardioSet.cardiotime} minutes and ${cardioSet.distance} miles\n- ${cardioSet.note}\n`;
+                }
+
+                if (callback) callback(cardioStr);
+            })
+        })
+    }
+
     skipDay(){
         this.skipTotal++;
         this.skipStreak++;

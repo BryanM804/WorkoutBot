@@ -9,7 +9,7 @@ class Set{
     static getXPAmount(movement, weight, reps, bodyweight = 0) {
         let xpAmount = 100;
 
-        if (movement.indexOf("Dumbbell") >= 0 || movement.startsWith("Hammer")) {
+        if (movement.indexOf("Dumbbell") >= 0 || movement.startsWith("Hammer") || movement.startsWith("Zottman")) {
             xpAmount += (2 * weight * reps);
         } else if (movement.indexOf("Assisted") >= 0) {
             //If an exercise is assisted and the user has bodyweight registered this adjusts xp and total accordingly
