@@ -1,7 +1,7 @@
 const getApplicationCommands = require("../../utils/getApplicationCommands");
-const { testServer } = require("..\\..\\..\\config.json");
-const getLocalCommands = require("..\\..\\utils\\getLocalCommands");
-const areCommandsDifferent = require("..\\..\\utils\\areCommandsDifferent");
+const { testServer } = require("../../../config.json");
+const getLocalCommands = require("../../utils/getLocalCommands");
+const areCommandsDifferent = require("../../utils/areCommandsDifferent");
 
 module.exports = async (client) => {
     try {
@@ -14,6 +14,7 @@ module.exports = async (client) => {
             const existingCommand = await applicationCommands.cache.find((cmd) => cmd.name === name);
 
             if (existingCommand) {
+
                 if (localCommand.deleted) {
                     await applicationCommands.delete(existingCommand.id);
                     console.log(`Deleted command: ${name}`);

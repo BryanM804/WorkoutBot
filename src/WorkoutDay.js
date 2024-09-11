@@ -1,4 +1,4 @@
-const Set = require(".\\Set.js");
+const Set = require("./Set.js");
 const { EmbedBuilder } = require("discord.js");
 
 class WorkoutDay{

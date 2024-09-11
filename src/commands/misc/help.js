@@ -1,4 +1,4 @@
-const { HelpEmbed } = require("..\\..\\utils\\Embeds.js");
+const { HelpEmbed } = require("../../utils/Embeds.js");
 
 module.exports = {
     name: "help",

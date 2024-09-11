@@ -1,5 +1,5 @@
 const { ApplicationCommandOptionType, EmbedBuilder } = require("discord.js");
-const { findAccount, sortAccounts } = require("..\\..\\index.js");
+const { findAccount, sortAccounts } = require("../../index.js");
 
 module.exports = {
     name: "leaderboard",

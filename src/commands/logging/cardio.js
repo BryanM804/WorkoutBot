@@ -1,5 +1,5 @@
 const { ApplicationCommandOptionType } = require("discord.js");
-const { findAccount } = require("..\\..\\index.js");
+const { findAccount } = require("../../index.js");
 
 module.exports = {
     name: "cardio",
@@ -40,37 +40,40 @@ module.exports = {
         const date = interaction.options.get("date")?.value ? new Date(Date.parse(interaction.options.get("date")?.value)).toDateString() : null;
         const note = interaction.options.get("note")?.value ? interaction.options.get("note").value : "";
         const distance = interaction.options.get("distance")?.value ? interaction.options.get("distance").value.toString() : "0.0";
+        let replyString;
 
         if (time <= 0 || time > 1000 || date == "Invalid Date") {
             interaction.reply({ content: "Invalid input.", ephemeral: true });
             console.log(`${interaction.user.username} tried to log cardio: ${movement} for ${time} minutes.`);
         } else {
             if (note == "" && distance == "0.0") 
-                console.log(`${interaction.user.username} Logged cardio: ${movement} for ${time} minutes.`);
+                replyString = `Logged ${movement} for ${time} minutes`;
             else if (note == "")
-                console.log(`${interaction.user.username} Logged cardio: ${movement} for ${time} minutes and ${distance} miles.`);
+                replyString = `Logged ${movement} for ${time} minutes and ${distance} miles`;
             else if (distance == "0.0")
-                console.log(`${interaction.user.username} Logged cardio: ${movement} for ${time} minutes, with note: ${note}.`);
+                replyString = `Logged ${movement} for ${time} minutes\n- ${note}`;
             else
-                console.log(`${interaction.user.username} Logged cardio: ${movement} for ${time} minutes and ${distance} miles, with note: ${note}.`);
+                replyString = `Logged ${movement} for ${time} minutes and ${distance} miles\n- ${note}`;
 
             let tempAccount = findAccount(interaction.user.username, interaction.user.id)
             let prevLvl = tempAccount.level;
 
             tempAccount.logCardio(movement, time, date, note, distance, () => {
+                //Reply in chat (will likely change to an embed later)
+
+                if (date) {
+                    replyString += ` on ${date}`;
+                }
+                replyString += `.`;
+
+                console.log(`${interaction.user.username} cardio: ${replyString}`);
+
+                interaction.reply(replyString);
+
                 if (tempAccount.level > prevLvl) {
                     interaction.channel.send(`${interaction.user} has leveled up to level ${tempAccount.level}!`);
                 }
             });
-
-            //Reply in chat (will likely change to an embed later)
-            let replyString = `Logged ${movement} for ${time} minutes`;
-
-            if (date) {
-                replyString += ` on ${date}`;
-            }
-
-            interaction.reply(replyString + ".");
         }
     }
 }

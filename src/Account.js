@@ -1,9 +1,9 @@
 const fs = require("fs");
 const sql = require("mysql2");
 const { EmbedBuilder } = require("discord.js");
-const WorkoutDay = require(".\\WorkoutDay.js");
-const Set = require(".\\Set.js");
-const createConnection = require(".\\createConnection.js");
+const WorkoutDay = require("./WorkoutDay.js");
+const Set = require("./Set.js");
+const createConnection = require("./createConnection.js");
 const con = createConnection();
 
 class Account{

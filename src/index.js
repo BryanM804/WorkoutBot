@@ -1,10 +1,10 @@
-const Account = require(".\\Account.js");
+const Account = require("./Account.js");
 const { Client, IntentsBitField } = require("discord.js");
 const fs = require("fs");
 const sql = require("mysql2");
-const eventHandler = require(".\\handlers\\eventHandler");
-const getAllFiles = require(".\\utils\\getAllFiles.js")
-const createConnection = require(".\\createConnection.js");
+const eventHandler = require("./handlers/eventHandler");
+const getAllFiles = require("./utils/getAllFiles.js")
+const createConnection = require("./createConnection.js");
 require("dotenv").config();
 
 //To do list:
@@ -99,7 +99,7 @@ function checkSkips(){
 
 // Clears the folder of generated graphs
 function clearGraphs() {
-    const graphs = getAllFiles(".\\src\\graphs");
+    const graphs = getAllFiles("./src/graphs");
     if (graphs.length <= 0) return;
 
     for (const graph of graphs) {

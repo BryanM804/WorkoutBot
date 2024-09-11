@@ -1,5 +1,5 @@
 const { ApplicationCommandOptionType } = require("discord.js");
-const { findAccount } = require("..\\..\\index.js");
+const { findAccount } = require("../../index.js");
 
 module.exports = {
     name: "label",
@@ -13,6 +13,8 @@ module.exports = {
         }
     ],
     callback: (client, interaction) => {
+        // This needs a fix for when a user makes a label with an apostrophe
+
         let userAccount = findAccount(interaction.user.username, interaction.user.id);
 
         userAccount.setDayLabel(interaction.options.get("label").value, (success) => {

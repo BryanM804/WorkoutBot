@@ -1,7 +1,7 @@
 const { ApplicationCommandOptionType, EmbedBuilder, AttachmentBuilder } = require("discord.js");
-const { findAccount } = require("..\\..\\index.js");
-const getAllFiles = require("..\\..\\utils\\getAllFiles.js")
-const generateGraph = require("..\\..\\utils\\generateGraph.js");
+const { findAccount } = require("../../index.js");
+const getAllFiles = require("../../utils/getAllFiles.js")
+const generateGraph = require("../../utils/generateGraph.js");
 
 module.exports = {
     name: "graph",
@@ -41,9 +41,9 @@ module.exports = {
                 userAccount.getAverageData(movement, (averages) => {
                     let fileNum = 0;
         
-                    const files = getAllFiles(".\\src\\graphs");
+                    const files = getAllFiles("./src/graphs");
                     for(const file of files) {
-                        const end = file.split("\\").pop().substring(5);
+                        const end = file.split("/").pop().substring(5);
                         const graphNumber = parseInt(end.replace(".png", ""));
                         if (graphNumber >= fileNum) {
                             fileNum = graphNumber + 1;
@@ -55,7 +55,7 @@ module.exports = {
                             interaction.reply({ content: "Not enough data for " + movement, ephemeral: true });
                             console.log(`${interaction.user.username} tried to graph history for ${movement} but doesn't have enough data.`);
                         } else {
-                            const graph = new AttachmentBuilder(".\\src\\graphs\\graph" + fileNum + ".png");
+                            const graph = new AttachmentBuilder("./src/graphs/graph" + fileNum + ".png");
         
                             const graphEmbed = new EmbedBuilder()
                                 .setTitle(`${interaction.user.username}'s ${movement}`)
@@ -71,9 +71,9 @@ module.exports = {
                 userAccount.getStrengthData(movement, (maxes) => {
                     let fileNum = 0;
         
-                    const files = getAllFiles(".\\src\\graphs");
+                    const files = getAllFiles("./src/graphs");
                     for(const file of files) {
-                        const end = file.split("\\").pop().substring(5);
+                        const end = file.split("/").pop().substring(5);
                         const graphNumber = parseInt(end.replace(".png", ""));
                         if (graphNumber >= fileNum) {
                             fileNum = graphNumber + 1;

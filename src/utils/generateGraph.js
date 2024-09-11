@@ -97,7 +97,7 @@ module.exports = (data, fileNum, type, callback) => {
     };
 
     const view = new vega.View(vega.parse(graph), {renderer: "none"});
-    const out = fs.createWriteStream(".\\src\\graphs\\graph" + fileNum + ".png")
+    const out = fs.createWriteStream("./src/graphs/graph" + fileNum + ".png")
 
     view.toCanvas().then(function(canvas) {
         const stream = canvas.createPNGStream();
