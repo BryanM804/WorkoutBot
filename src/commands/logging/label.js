@@ -1,5 +1,7 @@
 const { ApplicationCommandOptionType } = require("discord.js");
 const { findAccount } = require("../../index.js");
+const createConnection = require("../../createConnection.js");
+const con = createConnection();
 
 module.exports = {
     name: "label",
@@ -15,15 +17,28 @@ module.exports = {
     callback: (client, interaction) => {
         // This needs a fix for when a user makes a label with an apostrophe
 
-        let userAccount = findAccount(interaction.user.username, interaction.user.id);
+        const userAccount = findAccount(interaction.user.username, interaction.user.id);
+        const newLabel = interaction.options.get("label").value;
 
-        userAccount.setDayLabel(interaction.options.get("label").value, (success) => {
-            if (success) {
-                interaction.reply(`Set today's label to: ${interaction.options.get("label").value}`);
-                console.log(`${interaction.user.username} set today's label to ${interaction.options.get("label").value}`);
-            }
+        let today = new Date().toDateString();
+
+        con.connect((err) => {
+            if (err) console.log(`Connection error setting label: ${err}`);
+
+            con.query(`INSERT INTO labels (userID, label, date) VALUES (
+                '${userAccount.id}',
+                '${newLabel}',
+                '${today}'
+            )`, (err2, result) => {
+                if (err2) {
+                    console.log(`Query error setting label: ${err2}`);
+                    interaction.reply(`Error setting label.`);
+                    return;
+                }
+
+                interaction.reply(`Set today's label to: ${newLabel}`);
+                console.log(`${interaction.user.username} set today's label to \"${newLabel}\"`);
+            })
         });
-            //interaction.reply({ content: "No log for today, nothing to label.", ephemeral: true });
-            //console.log(`${interaction.user.username} tried to set a label for today but has no log.`);
     }
 }

@@ -2,6 +2,8 @@ const { ApplicationCommandOptionType, EmbedBuilder, AttachmentBuilder } = requir
 const { findAccount } = require("../../index.js");
 const getAllFiles = require("../../utils/getAllFiles.js")
 const generateGraph = require("../../utils/generateGraph.js");
+const getStrengthData = require("../../account/getStrengthData.js");
+const getAverageData = require("../../account/getAverageData.js");
 
 module.exports = {
     name: "graph",
@@ -38,7 +40,7 @@ module.exports = {
         // Horrific switch statement ahead
         switch (type) {
             case "sets":
-                userAccount.getAverageData(movement, (averages) => {
+                getAverageData(userAccount, movement, (averages) => {
                     let fileNum = 0;
         
                     const files = getAllFiles("./src/graphs");
@@ -68,7 +70,7 @@ module.exports = {
                 });
                 break;
             case "strength":
-                userAccount.getStrengthData(movement, (maxes) => {
+                getStrengthData(userAccount, movement, (maxes) => {
                     let fileNum = 0;
         
                     const files = getAllFiles("./src/graphs");
@@ -85,7 +87,7 @@ module.exports = {
                             interaction.reply({ content: "Not enough data for " + movement, ephemeral: true });
                             console.log(`${interaction.user.username} tried to graph history for ${movement} but doesn't have enough data.`);
                         } else {
-                            const graph = new AttachmentBuilder(".\\src\\graphs\\graph" + fileNum + ".png");
+                            const graph = new AttachmentBuilder("./src/graphs/graph" + fileNum + ".png");
         
                             const graphEmbed = new EmbedBuilder()
                                 .setTitle(`${interaction.user.username}'s ${movement}`)

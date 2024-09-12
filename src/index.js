@@ -2,13 +2,13 @@ const Account = require("./Account.js");
 const { Client, IntentsBitField } = require("discord.js");
 const fs = require("fs");
 const sql = require("mysql2");
+const net = require("net")
 const eventHandler = require("./handlers/eventHandler");
 const getAllFiles = require("./utils/getAllFiles.js")
 const createConnection = require("./createConnection.js");
 require("dotenv").config();
 
-//To do list:
-//cardio command
+const TESTMODE = false;
 
 const client = new Client({
     intents: [
@@ -208,4 +208,5 @@ try {
 }
 
 module.exports = { findAccount, sortAccounts, exerciseList };
-client.login(process.env.TOKEN);
+
+if (!TESTMODE) client.login(process.env.TOKEN);
