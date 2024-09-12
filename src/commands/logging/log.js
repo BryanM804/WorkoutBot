@@ -1,5 +1,6 @@
 const { ApplicationCommandOptionType } = require("discord.js");
 const { findAccount } = require("../../index.js");
+const logButtons = require("../../utils/buttons/logButtons.js");
 
 module.exports = {
     name: "log",
@@ -33,10 +34,12 @@ module.exports = {
             type: ApplicationCommandOptionType.String
         }
     ],
-    callback: (client, interaction) => {
+    callback: async (client, interaction) => {
+        const userAccount = findAccount(interaction.user.username, interaction.user.id);
+
         const movement = interaction.options.get("movement").value;
-        const weight = interaction.options.get("weight")?.value ?? 0;
-        const reps = interaction.options.get("reps")?.value ?? 0;
+        let weight = interaction.options.get("weight")?.value ?? 0;
+        let reps = interaction.options.get("reps")?.value ?? 0;
         const sets = interaction.options.get("sets")?.value ?? 1;
         const date = interaction.options.get("date")?.value ? new Date(Date.parse(interaction.options.get("date")?.value)).toDateString() : null;
 
@@ -61,24 +64,7 @@ module.exports = {
                 });
             }
 
-            //Reply in chat (will likely change to an embed later)
-            let replyString = "";
-
-            if (sets > 1 && weight >= 1) {
-                replyString = `Logged ${sets} sets of ${movement} ${weight}lbs for ${reps} reps`;
-            } else if (sets > 1) {
-                replyString = `Logged ${sets} sets of ${movement} for ${reps} reps`;
-            } else if (weight >= 1) {
-                replyString = `Logged ${movement} ${weight}lbs for ${reps} reps`;
-            } else {
-                replyString = `Logged ${movement} for ${reps} reps`;
-            }
-
-            if (date) {
-                replyString += ` on ${date}`;
-            }
-
-            interaction.reply(replyString + ".");
+            logButtons(interaction, movement, weight, reps, sets, date);
         }
     }
 }

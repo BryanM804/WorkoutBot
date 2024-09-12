@@ -1,5 +1,6 @@
 const { ApplicationCommandOptionType } = require("discord.js");
 const { findAccount } = require("../../index.js");
+const logButtons = require("../../utils/buttons/logButtons.js");
 
 module.exports = {
     name: "repeat",
@@ -34,19 +35,7 @@ module.exports = {
                 }
 
             if(lastSet){
-                if (repeats > 1 && lastSet.weight > 0) {
-                    interaction.reply(`Logged ${repeats} sets of ${lastSet.movement} ${lastSet.weight}lbs for ${lastSet.reps} reps.`);
-                    console.log(`${interaction.user.username} repeated: ${repeats} sets of ${lastSet.movement} ${lastSet.weight}lbs for ${lastSet.reps} reps.`);
-                } else if (repeats > 1) {
-                    interaction.reply(`Logged ${repeats} sets of ${lastSet.movement} for ${lastSet.reps} reps.`);
-                    console.log(`${interaction.user.username} repeated: ${repeats} sets of ${lastSet.movement} for ${lastSet.reps} reps.`);
-                } else if (lastSet.weight > 0) {
-                    interaction.reply(`Logged ${lastSet.movement} ${lastSet.weight}lbs for ${lastSet.reps} reps.`);
-                    console.log(`${interaction.user.username} repeated: ${lastSet.movement} ${lastSet.weight}lbs for ${lastSet.reps} reps.`);
-                } else {
-                    interaction.reply(`Logged ${lastSet.movement} for ${lastSet.reps} reps.`);
-                    console.log(`${interaction.user.username} repeated: ${lastSet.movement} for ${lastSet.reps} reps.`);
-                }
+                logButtons(interaction, lastSet.movement, lastSet.weight, lastSet.reps, repeats, lastSet.date);
             }else{
                 interaction.reply({ content: "No previous set to repeat for today.", ephemeral: true });
                 console.log(`${interaction.user.username} tried to repeat ${repeats} set(s) but has not logged one today.`);
