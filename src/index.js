@@ -8,7 +8,6 @@ const getAllFiles = require("./utils/getAllFiles.js")
 const createConnection = require("./createConnection.js");
 require("dotenv").config();
 
-const TESTMODE = false;
 
 const client = new Client({
     intents: [
@@ -208,5 +207,4 @@ try {
 }
 
 module.exports = { findAccount, sortAccounts, exerciseList };
-
-if (!TESTMODE) client.login(process.env.TOKEN);
+client.login(process.env.TOKEN);
