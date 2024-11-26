@@ -1,11 +1,9 @@
 const Account = require("./Account.js");
 const { Client, IntentsBitField } = require("discord.js");
 const fs = require("fs");
-const sql = require("mysql2");
-const net = require("net")
 const eventHandler = require("./handlers/eventHandler");
 const getAllFiles = require("./utils/getAllFiles.js")
-const createConnection = require("./createConnection.js");
+const pool = require("./pool.js");
 require("dotenv").config();
 
 
@@ -20,14 +18,11 @@ const client = new Client({
 
 eventHandler(client);
 
-// Establish a connection to the sql database
-const con = createConnection(); // gitignored so you don't see my password :P
-
 // Creating account objects for each user file when the bot starts
 let accounts = [];
 let exerciseList = [];
 
-con.connect((err) => {
+pool.getConnection((err, con) => {
     if (err) console.log(`Error connecting for exercise list: ${err}`);
 
     con.query(`SELECT movement FROM exercises`, (err2, movements) => {
@@ -36,12 +31,13 @@ con.connect((err) => {
         for (const movement of movements) {
             exerciseList.push(movement.movement);
         }
+        con.release();
     });
 });
 
 // In large scale it would be very inefficient to have every account loaded to memory.
 // However in its current state this project is meant to be a private bot for my friends only.
-con.connect((err) => {
+pool.getConnection((err, con) => {
     if (err) {
         console.error(err);
     } else {
@@ -50,6 +46,7 @@ con.connect((err) => {
             for (const acc of result) {
                 accounts.push(new Account(acc.name, acc.id));
             }
+            con.release();
         });
     }
 });
@@ -60,7 +57,7 @@ function checkSkips(){
     for (let i = 0; i < accounts.length; i++) {
         if (accounts[i].currentSetNumber < 2) continue;
 
-        con.connect((err) => {
+        pool.getConnection((err, con) => {
             if (err) console.log(`Connection error checking skips: ${err}`);
 
             con.query(`SELECT date FROM lifts WHERE userID = '${accounts[i].id}' ORDER BY dateval DESC, setid DESC;`, (err2, lastSet) => {
@@ -91,6 +88,8 @@ function checkSkips(){
                         accounts[i].skipDay();
                     }
                 }
+
+                con.release();
             });
         });
     }

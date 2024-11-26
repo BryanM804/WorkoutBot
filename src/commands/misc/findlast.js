@@ -1,7 +1,6 @@
 const { ApplicationCommandOptionType, EmbedBuilder } = require("discord.js");
 const { findAccount } = require("../../index.js");
-const createConnection = require("../../createConnection.js");
-const con = createConnection();
+const pool = require("../../pool.js");
 
 module.exports = {
     name: "findlast",
@@ -18,7 +17,7 @@ module.exports = {
     callback: (client, interaction) => {
         // const account = findAccount(interaction.user.username, interaction.user.id);
         // find account is kind of useless now
-        con.connect((conErr) => {
+        pool.getConnection((conErr, con) => {
             if (conErr) console.log(`Connection error: ${conErr}`);
             con.query(`SELECT movement, weight, reps, date
                         FROM lifts
@@ -52,7 +51,8 @@ module.exports = {
                             for (const s of res) {
                                 embed.addFields({name: s.movement, value: `${s.weight}lbs for ${s.reps} reps`, inline: true})
                             }
-
+                            
+                            con.release();
                             interaction.reply({message: `Last occurence of ${interaction.options.get("movement").value}`, embeds: [embed]});
                         })
                     }

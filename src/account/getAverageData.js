@@ -1,5 +1,4 @@
-const createConnection = require("../createConnection");
-const con = createConnection();
+const pool = require("../pool");
 
 module.exports = (user, exercise, callback) => {
 // Gets the averages in data form for use in graphing
@@ -8,7 +7,7 @@ module.exports = (user, exercise, callback) => {
     let total = 0;
     let count = 0;
 
-    con.connect((err) => {
+    pool.getConnection((err, con) => {
         if (err) console.log(`Connection error getting avgs: ${err}`);
 
         con.query(`SELECT * FROM lifts WHERE userID = '${user.id}' AND movement = '${exercise}' ORDER BY dateval DESC`, (err2, sets) => {
@@ -46,6 +45,7 @@ module.exports = (user, exercise, callback) => {
             }
             averages.push(average);
 
+            con.release();
             if (callback) callback(averages);
         });
     })

@@ -1,8 +1,7 @@
 const { ApplicationCommandOptionType, EmbedBuilder } = require("discord.js");
 const { findAccount } = require("../../index.js");
 const WorkoutDay = require("../../WorkoutDay.js");
-const createConnection = require("../../createConnection.js");
-const con = createConnection();
+const pool = require("../../pool.js");
 
 module.exports = {
     name: "history",
@@ -40,7 +39,7 @@ module.exports = {
     
             let historyEmbeds = [];
             
-            con.connect((err) => {
+            pool.getConnection((err, con) => {
                 if (err) console.log(`Connection error in history: ${err}`);
     
                 for (let i = days - 1; i >= 0; i--) {
@@ -69,6 +68,7 @@ module.exports = {
                                     console.log(`${interaction.user.username} fetched ${days} days of history from most recent date.`)
                                 }
                                 interaction.reply({ embeds: historyEmbeds });
+                                con.release();
                             }
                         });
                     })

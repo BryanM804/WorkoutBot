@@ -1,9 +1,6 @@
 const { ApplicationCommandOptionType, EmbedBuilder } = require("discord.js");
 const { findAccount } = require("../../index.js");
-const createConnection = require("../../createConnection.js");
 const getRestDayString = require("../../utils/getRestDayString.js");
-
-const con = createConnection();
 
 module.exports = {
     name: "profile",

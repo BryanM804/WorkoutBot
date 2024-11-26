@@ -1,7 +1,6 @@
 const Set = require("./Set.js");
-const createConnection = require("./createConnection.js");
+const pool = require("./pool.js");
 const getRecentAverage = require("./utils/getRecentAverage.js");
-const con = createConnection();
 
 class Account{
     constructor(name, id){
@@ -11,7 +10,7 @@ class Account{
     }
 
     getStatsFromDB(logInfo = false, callback) {
-        con.connect((err) => {
+        pool.getConnection((err, con) => {
             if (err) console.log(`Connection error getting stats: ${err}`);
 
             con.query(`SELECT * FROM accounts WHERE id = '${this.id}'`, (err2, result) => {
@@ -33,12 +32,14 @@ class Account{
 
                     if (this.restDays.length > 0) this.restDays.pop(); // Split leaves a '' in the array
 
+                    con.release();
                     if (callback) callback(true);
                 } else {
                     // Make a new account in the db
                     con.query(`INSERT INTO accounts (id, name, bodyweight, level, xp, creationDate, skiptotal, skipstreak, squat, bench, deadlift) VALUES (
                         '${this.id}', '${this.name}', 0, 1, 0, '${new Date().toDateString()}', 0, 0, 0, 0, 0)`, (err2, result) => {
                             if (err2) console.log(`Query error creating account: ${err2}`);
+                            con.release();
                             if (callback) callback(false);
                         })
                 }
@@ -48,7 +49,7 @@ class Account{
     }
 
     writeStatsToDB(logInfo = false, callback) {
-        con.connect((err) => {
+        pool.getConnection((err, con) => {
             if (err) console.log(`Connection error: ${err}`);
 
             let restDaysString = "";
@@ -83,6 +84,7 @@ class Account{
                             if (logInfo) console.log(result);
                         }, (err3, result) => {
                             if (err3) console.log(`Error updating accounts: ${err3}`);
+                            con.release();
                             if (callback) callback();
                         })
                 })
@@ -102,7 +104,7 @@ class Account{
         
         this.xp += Set.getXPAmount(movement, weight, reps, this.bodyweight);
 
-        con.connect((err) => {
+        pool.getConnection((err, con) => {
             if (err) console.log(`Connection error: ${err}`);
             con.query(`INSERT INTO lifts (userID, movement, weight, reps, date, settotal, dateval, time) VALUES (
                 '${this.id}',
@@ -129,6 +131,7 @@ class Account{
 
                 this.skipStreak = 0;
                 this.writeStatsToDB();
+                con.release();
                 if (callback) callback();
             });
         });
@@ -138,7 +141,7 @@ class Account{
     repeatSet(weight, reps, repeats, callback){
         let repeatWeight, repeatReps;
 
-        con.connect((err) => {
+        pool.getConnection((err, con) => {
             if (err) console.log(`Connection error in repeat set: ${err}`);
             con.query(`SELECT * FROM lifts WHERE userID = '${this.id}' ORDER BY dateval DESC, setid DESC;`, (err2, sets) => {
                 if (err2) console.log(`Querying error in repeat set: ${err2}`);
@@ -159,6 +162,8 @@ class Account{
                 } else {
                     if (callback) callback(false);
                 }
+
+                con.release();
             });
         });
     }
@@ -173,7 +178,7 @@ class Account{
             today = new Date().toDateString();
         }
 
-        con.connect((err) => {
+        pool.getConnection((err, con) => {
             if (err) console.log(`Connection error logging cardio: ${err}`);
             
             con.query(`INSERT INTO cardio (userid, movement, cardiotime, date, time, note, distance) VALUES (
@@ -200,6 +205,7 @@ class Account{
                 }
                 
                 this.writeStatsToDB();
+                con.release();
                 if (callback) callback()
             });
         });
@@ -213,7 +219,7 @@ class Account{
             today = new Date().toDateString();
         }
 
-        con.connect((err) => {
+        pool.getConnection((err, con) => {
             if (err) console.log(`Connection error getting sets breakdown: ${err}`);
 
             const qry = `SELECT mgroup, COUNT(*)
@@ -246,8 +252,9 @@ class Account{
                     const finalMov = avgs[avgs.length - 1].movement;
                     breakdownStr += "\nScores:\n";
 
+                    // Scores are the difference between today's average and their recent average of the past 30 days
                     for (const avg of avgs) {
-                        getRecentAverage(this, avg.movement, (recentAverage) => {
+                        getRecentAverage(this, avg.movement, date, (recentAverage) => {
                             const avgDiff = avg["AVG(settotal)"] - recentAverage;
                             const sym = avgDiff > 0 ? "+" : "";
                             
@@ -255,6 +262,7 @@ class Account{
 
                             // Callback with the breakdown string once we reach the last movement in the list
                             if (avg.movement == finalMov && callback) callback(breakdownStr);
+                            con.release();
                         })
                     }
                 })
@@ -270,7 +278,7 @@ class Account{
             today = new Date().toDateString();
         }
 
-        con.connect((err) => {
+        pool.getConnection((err, con) => {
             if (err) console.log(`Connection error getting sets breakdown: ${err}`);
             
             con.query(`SELECT * FROM cardio WHERE userid = '${this.id}' AND date = '${today}';`, (err2, results) => {
@@ -290,6 +298,7 @@ class Account{
                 }
 
                 if (callback) callback(cardioStr);
+                con.release();
             })
         })
     }
@@ -305,7 +314,7 @@ class Account{
         let removeSets = sets || 1;
         if(removeSets <= 0) removeSets = 1;
 
-        con.connect((err) => {
+        pool.getConnection((err, con) => {
             if (err) console.log(`Connection error: ${err}`);
             con.query(`SELECT * FROM lifts WHERE userID = '${this.id}' ORDER BY dateval DESC, setid DESC;`, (err2, results) => {
                 if (err2) console.log(`Query error undoing set: ${err2}`);
@@ -330,6 +339,7 @@ class Account{
                         }
 
                         this.writeStatsToDB();
+                        con.release();
                     });
                 }
                 if (callback) callback(true);
@@ -338,7 +348,7 @@ class Account{
     }
 
     getTotalDays(callback){
-        con.connect((err) => {
+        pool.getConnection((err, con) => {
             if (err) console.log(`Connection error getting total days: ${err}`);
             con.query(`SELECT DISTINCT date FROM lifts WHERE userID = '${this.id}' ORDER BY date;`, (err2, allDates) => {
                 if (allDates.length < 1) {
@@ -348,6 +358,7 @@ class Account{
 
                 this.totalDays = allDates.length; // This method would always be called before this needs to be displayed
                 if (callback) callback(allDates.length);
+                con.release();
             });
         });
     }

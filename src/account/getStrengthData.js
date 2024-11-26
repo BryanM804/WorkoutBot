@@ -1,11 +1,10 @@
-const createConnection = require("../createConnection");
-const con = createConnection();
+const pool = require("../pool");
 
 module.exports = (user, exercise, callback) => {
     let maxes = [];
     let max = 0;
 
-    con.connect((err) => {
+    pool.getConnection((err, con) => {
         if (err) console.log(`Connection error getting maxes: ${err}`);
 
         con.query(`SELECT * FROM lifts WHERE userID = '${user.id}' AND movement = '${exercise}' ORDER BY dateval DESC`, (err2, sets) => {
@@ -42,6 +41,7 @@ module.exports = (user, exercise, callback) => {
             }
             maxes.push(maxTotal);
 
+            con.release();
             if (callback) callback(maxes);
         });
     })

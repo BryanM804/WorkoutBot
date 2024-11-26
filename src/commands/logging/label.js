@@ -1,7 +1,6 @@
 const { ApplicationCommandOptionType } = require("discord.js");
 const { findAccount } = require("../../index.js");
-const createConnection = require("../../createConnection.js");
-const con = createConnection();
+const pool = require("../../pool.js");
 
 module.exports = {
     name: "label",
@@ -22,7 +21,7 @@ module.exports = {
 
         let today = new Date().toDateString();
 
-        con.connect((err) => {
+        pool.getConnection((err, con) => {
             if (err) console.log(`Connection error setting label: ${err}`);
 
             con.query(`INSERT INTO labels (userID, label, date) VALUES (
@@ -38,6 +37,7 @@ module.exports = {
 
                 interaction.reply(`Set today's label to: ${newLabel}`);
                 console.log(`${interaction.user.username} set today's label to \"${newLabel}\"`);
+                con.release();
             })
         });
     }

@@ -1,8 +1,7 @@
 const { ApplicationCommandOptionType, EmbedBuilder } = require("discord.js");
 const { findAccount } = require("../../index.js");
 const Set = require("../../Set.js");
-const createConnection = require("../../createConnection.js");
-const con = createConnection();
+const pool = require("../../pool.js");
 
 module.exports = {
     name: "stats",
@@ -33,7 +32,7 @@ module.exports = {
         let lifetimeCount = 0;
         let thirtyDayCount = 0;
 
-        con.connect((err) => {
+        pool.getConnection((err, con) => {
             if (err) console.log(`Connection error getting stats: ${err}`);
 
             con.query(`SELECT * FROM lifts WHERE userID = '${userAccount.id}' AND movement = '${movement}' ORDER BY dateval DESC`, (err2, sets) => {
@@ -101,6 +100,7 @@ module.exports = {
 
                 interaction.reply({ embeds: [statsEmbed] });
                 console.log(`${interaction.user.username} fetched stats for their ${movement}.`);
+                con.release();
             });
         });
     }

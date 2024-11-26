@@ -1,6 +1,4 @@
-const sql = require("mysql2")
-const createConnection = require("../createConnection")
-const con = createConnection()
+const pool = require("../pool");
 
 module.exports = (userAccount, date, callback) => {
     if (userAccount == null) {
@@ -8,7 +6,7 @@ module.exports = (userAccount, date, callback) => {
         return -1;
     }
 
-    con.connect((err) => {
+    pool.getConnection((err, con) => {
         if (err) console.log(`Connection error getting time data:\n ${err}`);
 
         const today = date;
@@ -38,6 +36,7 @@ module.exports = (userAccount, date, callback) => {
                 count++;
             }
 
+            con.release();
             if (callback) callback(Math.ceil((avg / count) / 1000));
         })
     })
