@@ -1,9 +1,6 @@
-const fs = require("fs");
-const sql = require("mysql2");
-const { EmbedBuilder } = require("discord.js");
-const WorkoutDay = require("./WorkoutDay.js");
 const Set = require("./Set.js");
 const createConnection = require("./createConnection.js");
+const getRecentAverage = require("./utils/getRecentAverage.js");
 const con = createConnection();
 
 class Account{
@@ -218,47 +215,50 @@ class Account{
 
         con.connect((err) => {
             if (err) console.log(`Connection error getting sets breakdown: ${err}`);
-            
-            con.query(`SELECT * FROM lifts WHERE userID = '${this.id}' AND date = '${today}';`, (err2, results) => {
-                if (err2) console.log(`Error getting sets for breakdown:\n ${err2}`);
 
-                con.query(`SELECT * FROM exercises;`, (err3, movements) => {
-                    if (err3) console.log(`Error getting movements for breakdown:\n ${err3}`)
+            const qry = `SELECT mgroup, COUNT(*)
+                        FROM lifts l, exercises e
+                        WHERE l.movement = e.movement
+                        AND l.userID = '${this.id}'
+                        AND l.date = '${today}'
+                        GROUP BY mgroup;`;
 
-                    let groups = []
-                    let counts = []
+            con.query(qry, (err2, res) => {
+                if (err2) console.log(`Query error getting breakdown:\n${err2}`);
+                if (res == null || res.length == 0) return;
 
-                    for (const set of results) {
-                        const movement = set.movement;
-                        for (const inclMovement of movements) {
-                            if (movement == inclMovement.movement) {
-                                let has = false;
-                                // console.log(`${movement} == ${inclMovement}, ${inclMovement.mgroup}`);
+                let breakdownStr = "";
 
-                                for (let i = 0; i < groups.length; i++) {
-                                    if (groups[i] == inclMovement.mgroup) {
-                                        counts[i]++;
-                                        has = true;
-                                        break;
-                                    }
-                                }
+                for (const group of res) {
+                    breakdownStr += `${group.mgroup}: ${group["COUNT(*)"]} sets\n`;
+                }
 
-                                if (!has) {
-                                    groups.push(inclMovement.mgroup);
-                                    counts.push(1);
-                                }
-                            }
-                        }
+                const scoreQry = `SELECT movement, AVG(settotal)
+                                FROM lifts
+                                WHERE userID = '${this.id}'
+                                AND date = '${today}'
+                                GROUP BY movement;`;
+
+                con.query(scoreQry, (scErr, avgs) => {
+                    if (scErr) console.log(`Query Error getting averages for breakdown:\n${scErr}`);
+                    if (avgs == null || avgs.length == 0) return;
+
+                    const finalMov = avgs[avgs.length - 1].movement;
+                    breakdownStr += "\nScores:\n";
+
+                    for (const avg of avgs) {
+                        getRecentAverage(this, avg.movement, (recentAverage) => {
+                            const avgDiff = avg["AVG(settotal)"] - recentAverage;
+                            const sym = avgDiff > 0 ? "+" : "";
+                            
+                            breakdownStr += `${avg.movement}: ${sym}${avgDiff.toFixed(1)}\n`
+
+                            // Callback with the breakdown string once we reach the last movement in the list
+                            if (avg.movement == finalMov && callback) callback(breakdownStr);
+                        })
                     }
-
-                    let breakdownStr = ``;
-                    for (let i = 0; i < groups.length; i++) {
-                        breakdownStr += `${groups[i]}: ${counts[i]} sets\n`
-                    }
-
-                    if (callback) callback(breakdownStr)
                 })
-            })
+            });
         })
     }
 

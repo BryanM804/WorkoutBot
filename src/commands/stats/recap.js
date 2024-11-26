@@ -1,6 +1,7 @@
 const { ApplicationCommandOptionType } = require("discord.js");
 const { findAccount } = require("../../index.js");
 const getAverageTimeSets = require("../../utils/getAverageTimeSets.js");
+const getRecentAverage = require("../../utils/getRecentAverage.js");
 
 module.exports = {
     name: "recap",
