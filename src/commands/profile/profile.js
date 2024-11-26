@@ -52,8 +52,8 @@ module.exports = {
                 if (user.bodyweight > 0) {
                     profileEmbed.addFields({ name: `Body weight:`, value: `${user.bodyweight}lbs` });
                 }
-                profileEmbed.addFields({ name: `Days Skipped:`, value: ` ${user.skipTotal} days`, inline: true })
-                .addFields({ name: `Current Skip Streak:`, value: `${user.skipStreak} days`, inline: true })
+                profileEmbed.addFields({ name: `Total Weight Lifted:`, value: ` ${user.totalweight}lbs`, inline: true })
+                .addFields({ name: `Total Sets Logged:`, value: `${user.totalsets} sets`, inline: true })
                 .addFields({ name: "Rest Days:", value: getRestDayString(user), inline: true });
                 if (user.squat > 0) {
                     profileEmbed.addFields({ name: `Squat:`, value: `${user.squat}lbs`, inline: true });
@@ -64,7 +64,19 @@ module.exports = {
                 if (user.deadlift > 0) {
                     profileEmbed.addFields({ name: `Deadlift:`, value: `${user.deadlift}lbs`, inline: true });
                 }
-    
+                
+                if (user.level > 10 && user.level < 25) {
+                    profileEmbed.setColor(0xFFFFFF)
+                } else if (user.level >= 25 && user.level < 50) {
+                    profileEmbed.setColor(0x94D4FF)
+                } else if (user.level >= 50 && user.level < 75) {
+                    profileEmbed.setColor(0x0FFF97)
+                } else if (user.level >= 75 && user.level < 100) {
+                    profileEmbed.setColor(0xFF4D2E)
+                } else if (user.level >= 100) {
+                    profileEmbed.setColor(0xF8FF2E)
+                }
+
                 interaction.reply({ embeds: [profileEmbed] });
                 console.log(`${profileUser.username} profile fetched.`);
             });

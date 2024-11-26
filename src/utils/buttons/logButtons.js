@@ -112,10 +112,10 @@ module.exports = async (interaction, movement, weight, reps, sets, date) => {
 
     const buttonResponse = await interaction.reply({ content: messageContents + ".", components: [repRow, weightRow, buttonRow] });
 
-    // Clear buttons automatically after 30 minutes
+    // Clear buttons automatically after ~15 minutes (Max Webhook time)
     setTimeout(() => {
         interaction.editReply({ components: [] });
-    }, 1800000);
+    }, 895000);
 
     const stringCollector = buttonResponse.createMessageComponentCollector({ componentType: ComponentType.StringSelect })
     const buttonCollector = buttonResponse.createMessageComponentCollector({ componentType: ComponentType.Button })
@@ -126,7 +126,7 @@ module.exports = async (interaction, movement, weight, reps, sets, date) => {
             console.log(`${i.user.username} rep change: ${repChange}`);
         } else if (i.customId == "weightSelect" && i.user.username == interaction.user.username) {
             weightChange = parseInt(i.values[0]);
-            console.log(`${i.user.username}weight change: ${weightChange}`);
+            console.log(`${i.user.username} weight change: ${weightChange}`);
         }
     })
 

@@ -31,6 +31,8 @@ class Account{
                     this.squat = profile.squat;
                     this.bench = profile.bench;
                     this.deadlift = profile.deadlift;
+                    this.totalsets = profile.totalsets;
+                    this.totalweight = profile.totalweight;
 
                     if (this.restDays.length > 0) this.restDays.pop(); // Split leaves a '' in the array
 
@@ -57,23 +59,36 @@ class Account{
                 restDaysString += parseInt(this.restDays[i]) + " ";
             }
 
-            con.query(`UPDATE accounts SET 
-            bodyweight = ${this.bodyweight},
-            level = ${this.level},
-            xp = ${this.xp},
-            skiptotal = ${this.skipTotal},
-            skipstreak = ${this.skipStreak},
-            restdays = '${restDaysString}',
-            squat = ${this.squat},
-            bench = ${this.bench},
-            deadlift = ${this.deadlift}
-            WHERE id = '${this.id}'`, 
-            (err2, result) => {
-                if (err2) console.log(`Query error: ${err2}`);
-                if (logInfo) console.log(result);
-            }, (err3, result) => {
-                if (err3) console.log(`Error updating accounts: ${err3}`);
-                if (callback) callback();
+            con.query(`SELECT SUM(settotal) FROM lifts WHERE userID = '${this.id}';`, (e, total) => {
+                if (e) console.log(`Error totaling sets: ${e}`);
+                
+                this.totalweight = total[0]["SUM(settotal)"];
+                
+                con.query(`SELECT COUNT(*) FROM lifts WHERE userID = '${this.id}';`, (e, totalsets) => {
+                    if (e) console.log(`Error getting set count: ${e}`);
+                    this.totalsets = totalsets[0]["COUNT(*)"];
+
+                    con.query(`UPDATE accounts SET 
+                        bodyweight = ${this.bodyweight},
+                        level = ${this.level},
+                        xp = ${this.xp},
+                        skiptotal = ${this.skipTotal},
+                        skipstreak = ${this.skipStreak},
+                        restdays = '${restDaysString}',
+                        squat = ${this.squat},
+                        bench = ${this.bench},
+                        deadlift = ${this.deadlift},
+                        totalweight = ${this.totalweight},
+                        totalsets = ${this.totalsets}
+                        WHERE id = '${this.id}';`, 
+                        (err2, result) => {
+                            if (err2) console.log(`Query error: ${err2}`);
+                            if (logInfo) console.log(result);
+                        }, (err3, result) => {
+                            if (err3) console.log(`Error updating accounts: ${err3}`);
+                            if (callback) callback();
+                        })
+                })
             })
         })
     }
