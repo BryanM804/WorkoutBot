@@ -2,12 +2,12 @@ const { ApplicationCommandOptionType, EmbedBuilder, AttachmentBuilder } = requir
 const { findAccount } = require("../../index.js");
 const getAllFiles = require("../../utils/getAllFiles.js")
 const generateGraph = require("../../utils/generateGraph.js");
-const getStrengthData = require("../../account/getStrengthData.js");
-const getAverageData = require("../../account/getAverageData.js");
+const getGraphData = require("../../account/getGraphData.js");
+const getRecentAverage = require("../../utils/getRecentAverage.js");
 
 module.exports = {
     name: "graph",
-    description: "Generate a graph of average totals for a certain exercise across all logged days.",
+    description: "Generate graphs of your lifting data. (Using \"Today\" overrides the type of graph)",
     options: [
         {
             name: "movement",
@@ -28,6 +28,29 @@ module.exports = {
                 {
                     name: "Strength",
                     value: "strength"
+                },
+                {
+                    name: "Best Set per Day",
+                    value: "best"
+                }
+            ]
+        },
+        {
+            name: "timeframe",
+            description: "Period of time to graph.",
+            type: ApplicationCommandOptionType.String,
+            choices: [
+                {
+                    name: "All",
+                    value: "all"
+                },
+                {
+                    name: "Recent",
+                    value: "recent"
+                },
+                {
+                    name: "Today",
+                    value: "today"
                 }
             ]
         }
@@ -36,70 +59,86 @@ module.exports = {
         const userAccount = findAccount(interaction.user.username, interaction.user.id);
         const movement = interaction.options.get("movement").value;
         const type = interaction.options.get("type")?.value ? interaction.options.get("type").value : "sets";
+        const timeframe = interaction.options.get("timeframe")?.value ? interaction.options.get("timeframe").value : "all";
 
-        // Horrific switch statement ahead
-        switch (type) {
-            case "sets":
-                getAverageData(userAccount, movement, (averages) => {
-                    let fileNum = 0;
-        
-                    const files = getAllFiles("./src/graphs");
-                    for(const file of files) {
-                        const end = file.split("/").pop().substring(5);
-                        const graphNumber = parseInt(end.replace(".png", ""));
-                        if (graphNumber >= fileNum) {
-                            fileNum = graphNumber + 1;
-                        }
-                    }
-        
-                    generateGraph(averages, fileNum, type, (result) => {
+        getGraphData(userAccount, movement, type, timeframe, (data) => {
+            let fileNum = 0;
+
+            const files = getAllFiles("./src/graphs");
+            for(const file of files) {
+                const end = file.split("/").pop().substring(5);
+                const graphNumber = parseInt(end.replace(".png", ""));
+                if (graphNumber >= fileNum) {
+                    fileNum = graphNumber + 1;
+                }
+            }
+
+            let dataOb = {
+                "data": data
+            }
+
+            let adj, timeAdj;
+            switch (type) {
+                case "sets":
+                    adj = "average ";
+                    break;
+                case "strength":
+                    adj = "strongest ";
+                    break;
+                case "best":
+                    adj = "best ";
+                    break;
+            }
+            switch (timeframe) {
+                case "all":
+                    timeAdj = "";
+                    break;
+                case "recent":
+                    timeAdj = "recent ";
+                    break;
+                case "today":
+                    timeAdj = "current sets of ";
+                    adj = "";
+                    break;
+            }
+            const graphEmbed = new EmbedBuilder()
+                .setTitle(`${interaction.user.username}'s ${adj}${timeAdj}${movement}`);
+
+            // Unfortunate giant duplicated code
+            if (timeframe == "today") {
+                getRecentAverage(userAccount, movement, null, (recentAvg) => {
+                    dataOb["baseline"] = recentAvg;
+
+                    generateGraph(dataOb, fileNum, type, timeframe, (result) => {
                         if (!result) {
                             interaction.reply({ content: "Not enough data for " + movement, ephemeral: true });
                             console.log(`${interaction.user.username} tried to graph history for ${movement} but doesn't have enough data.`);
                         } else {
                             const graph = new AttachmentBuilder("./src/graphs/graph" + fileNum + ".png");
-        
-                            const graphEmbed = new EmbedBuilder()
-                                .setTitle(`${interaction.user.username}'s ${movement}`)
-                                .setImage("attachment://graph" + fileNum + ".png");
+                                   
+                            graphEmbed.setImage("attachment://graph" + fileNum + ".png");
         
                             interaction.reply({ embeds: [graphEmbed], files: [graph] });
                             console.log(`${interaction.user.username} graphed history of their ${movement}.`)
                         }
                     });
-                });
-                break;
-            case "strength":
-                getStrengthData(userAccount, movement, (maxes) => {
-                    let fileNum = 0;
-        
-                    const files = getAllFiles("./src/graphs");
-                    for(const file of files) {
-                        const end = file.split("/").pop().substring(5);
-                        const graphNumber = parseInt(end.replace(".png", ""));
-                        if (graphNumber >= fileNum) {
-                            fileNum = graphNumber + 1;
-                        }
+                })
+            } else {
+                generateGraph(dataOb, fileNum, type, timeframe, (result) => {
+                    if (!result) {
+                        interaction.reply({ content: "Not enough data for " + movement, ephemeral: true });
+                        console.log(`${interaction.user.username} tried to graph history for ${movement} but doesn't have enough data.`);
+                    } else {
+                        const graph = new AttachmentBuilder("./src/graphs/graph" + fileNum + ".png");
+
+                        graphEmbed.setImage("attachment://graph" + fileNum + ".png");
+    
+                        interaction.reply({ embeds: [graphEmbed], files: [graph] });
+                        console.log(`${interaction.user.username} graphed history of their ${movement}.`)
                     }
-        
-                    generateGraph(maxes, fileNum, type, (result) => {
-                        if (!result) {
-                            interaction.reply({ content: "Not enough data for " + movement, ephemeral: true });
-                            console.log(`${interaction.user.username} tried to graph history for ${movement} but doesn't have enough data.`);
-                        } else {
-                            const graph = new AttachmentBuilder("./src/graphs/graph" + fileNum + ".png");
-        
-                            const graphEmbed = new EmbedBuilder()
-                                .setTitle(`${interaction.user.username}'s ${movement}`)
-                                .setImage("attachment://graph" + fileNum + ".png");
-        
-                            interaction.reply({ embeds: [graphEmbed], files: [graph] });
-                            console.log(`${interaction.user.username} graphed history of their ${movement}.`)
-                        }
-                    });
                 });
-                break;
-        }
-        
+            }
+        });
     }
+                
 }

@@ -1,9 +1,10 @@
 const vega = require("vega");
 const { createPNGStream } = require("canvas");
 const fs = require("fs");
+const getRecentAverage = require("./getRecentAverage");
 
-module.exports = (data, fileNum, type, callback) => {
-    if (data.length < 2) {
+module.exports = (data, fileNum, type, timeframe, callback) => {
+    if (data.data.length < 2) {
         if (callback) callback(false);
         return;
     }
@@ -16,15 +17,9 @@ module.exports = (data, fileNum, type, callback) => {
         case "sets":
             title = "Average Set Total";
             break;
-        default:
-            title = "Average Set Total";
+        case "best":
+            title = "Best Set Total";
             break;
-    }
-
-    let tableValues = [];
-
-    for (let i = 0; i < data.length; i++) {
-        tableValues.push({ "x": data[i].day, "y": data[i].val })
     }
 
     const graph = {
@@ -32,11 +27,27 @@ module.exports = (data, fileNum, type, callback) => {
         "width": 600,
         "height": 400,
         "padding": 5,
-        "background": "white",
+        "background": "black",
+        "config": {
+            "style": {
+                "guide-label": {
+                    "stroke": "white",
+                    "fill": "white"
+                },
+                "guide-title": {
+                    "stroke": "white",
+                    "fill": "white"
+                },
+                "group-title": {
+                    "stroke": "white",
+                    "fill": "white"
+                }
+            }
+        },
         "data": [
             {
                 "name": "table",
-                "values": tableValues
+                "values": data.data
             }
         ],
         "scales": [
@@ -86,7 +97,7 @@ module.exports = (data, fileNum, type, callback) => {
                             "scale": "y",
                             "field": "y"
                         },
-                        "stroke": { "value": "black" },
+                        "stroke": { "value": "yellow" },
                         "strokewidth": { "value": 4 },
                         "strokeOpacity": 1
                     }
@@ -95,6 +106,44 @@ module.exports = (data, fileNum, type, callback) => {
             }
         ]
     };
+
+    if (timeframe == "today") {
+        // Duplicating the average point for every x since it is easier than using layers and stuff in vega
+        let averagePts = [];
+        for (const p of data.data) {
+            averagePts.push({
+                "x": p.x,
+                "y": data.baseline
+            })
+        }
+
+        graph.data.push({
+            "name": "baseline",
+            "values": averagePts
+        })
+        graph.marks.push({
+            "type": "line",
+            "from": { "data": "baseline" },
+            "encode": {
+                "enter": {
+                    "x": {
+                        "scale": "x",
+                        "field": "x"
+                    },
+                    "y": {
+                        "scale": "y",
+                        "field": "y"
+                    },
+                    "stroke": { "value": "blue" },
+                    "strokewidth": { "value": 4 },
+                    "strokeOpacity": 1
+                }
+            },
+            "defined": true
+        })
+        graph.axes[0].title = "Set"
+        graph.axes[1].title = "Set Total"
+    }
 
     const view = new vega.View(vega.parse(graph), {renderer: "none"});
     const out = fs.createWriteStream("./src/graphs/graph" + fileNum + ".png")

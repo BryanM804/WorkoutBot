@@ -5,14 +5,16 @@ module.exports = (user, movement, date=null, callback) => {
         if (conErr) console.log(`Connection error in recent average: ${conErr}`);
 
         let today;
-        if (date) {
+        if (date != null) {
             today = date;
         } else {
             today = new Date().toDateString();
         }
 
         const currentDateVal = Date.parse(today);
-        const lowestDateVal = currentDateVal - 2592000000;
+        // const lowestDateVal = currentDateVal - 2592000000;
+        // Using 60 days now, usually not a lot of data for only 30 days of a specific movement
+        const lowestDateVal = currentDateVal - 5184000000;
 
         const qry = `SELECT AVG(settotal)
                     FROM lifts
