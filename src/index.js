@@ -21,33 +21,20 @@ eventHandler(client);
 // Creating account objects for each user file when the bot starts
 let accounts = [];
 let exerciseList = [];
-
-pool.getConnection((err, con) => {
-    if (err) console.log(`Error connecting for exercise list: ${err}`);
-
-    con.query(`SELECT movement FROM exercises`, (err2, movements) => {
-        if (err2) console.log(`Error fetching exercise list: ${err2}`);
-        
-        for (const movement of movements) {
-            exerciseList.push(movement.movement);
-        }
-        con.release();
-    });
+pool.query(`SELECT movement FROM exercises`, (err2, movements) => {
+    if (err2) console.log(`Error fetching exercise list: ${err2}`);
+    
+    for (const movement of movements) {
+        exerciseList.push(movement.movement);
+    }
 });
 
 // In large scale it would be very inefficient to have every account loaded to memory.
 // However in its current state this project is meant to be a private bot for my friends only.
-pool.getConnection((err, con) => {
-    if (err) {
-        console.error(err);
-    } else {
-        con.query(`SELECT * FROM accounts`, (err2, result) => {
-            if (err2) console.error(err2);
-            for (const acc of result) {
-                accounts.push(new Account(acc.name, acc.id));
-            }
-            con.release();
-        });
+pool.query(`SELECT * FROM accounts`, (err2, result) => {
+    if (err2) console.error(err2);
+    for (const acc of result) {
+        accounts.push(new Account(acc.name, acc.id));
     }
 });
 
@@ -57,40 +44,34 @@ function checkSkips(){
     for (let i = 0; i < accounts.length; i++) {
         if (accounts[i].currentSetNumber < 2) continue;
 
-        pool.getConnection((err, con) => {
-            if (err) console.log(`Connection error checking skips: ${err}`);
+        pool.query(`SELECT date FROM lifts WHERE userID = '${accounts[i].id}' ORDER BY dateval DESC, setid DESC;`, (err2, lastSet) => {
+            if (err2) console.log(`Query error checking skips: ${err2}`);
+            if (!lastSet[0]) return;
 
-            con.query(`SELECT date FROM lifts WHERE userID = '${accounts[i].id}' ORDER BY dateval DESC, setid DESC;`, (err2, lastSet) => {
-                if (err2) console.log(`Query error checking skips: ${err2}`);
-                if (!lastSet[0]) return;
+            const lastDate = new Date(lastSet[0].date);
+            let daysSkipped = 0;
+            let tempDate = new Date(Date.parse(new Date().toDateString())); // removes ms from date
 
-                const lastDate = new Date(lastSet[0].date);
-                let daysSkipped = 0;
-                let tempDate = new Date(Date.parse(new Date().toDateString())); // removes ms from date
-
-                while (parseInt((tempDate.getTime() - lastDate.getTime()) / 86400000) != 0) {
-                    restDay = false;
-        
-                    for (let j = 0; j < accounts[i].restDays.length; j++) {
-                        if(tempDate.getDay() == accounts[i].restDays[j]){
-                            restDay = true;
-                        }
-                    }
-        
-                    tempDate.setTime(tempDate.getTime() - 86400000);
-        
-                    if(!restDay) daysSkipped++;
-                }
-        
-                if (daysSkipped > 0) {
-                    while (accounts[i].skipStreak < daysSkipped) {
-                        console.log(`${accounts[i].name} Skipped.`)
-                        accounts[i].skipDay();
+            while (parseInt((tempDate.getTime() - lastDate.getTime()) / 86400000) != 0) {
+                restDay = false;
+    
+                for (let j = 0; j < accounts[i].restDays.length; j++) {
+                    if(tempDate.getDay() == accounts[i].restDays[j]){
+                        restDay = true;
                     }
                 }
-
-                con.release();
-            });
+    
+                tempDate.setTime(tempDate.getTime() - 86400000);
+    
+                if(!restDay) daysSkipped++;
+            }
+    
+            if (daysSkipped > 0) {
+                while (accounts[i].skipStreak < daysSkipped) {
+                    console.log(`${accounts[i].name} Skipped.`)
+                    accounts[i].skipDay();
+                }
+            }
         });
     }
 }

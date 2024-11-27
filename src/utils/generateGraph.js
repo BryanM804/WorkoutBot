@@ -134,7 +134,7 @@ module.exports = (data, fileNum, type, timeframe, callback) => {
                         "scale": "y",
                         "field": "y"
                     },
-                    "stroke": { "value": "blue" },
+                    "stroke": { "value": "lightblue" },
                     "strokewidth": { "value": 4 },
                     "strokeOpacity": 1
                 }

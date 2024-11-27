@@ -21,24 +21,19 @@ module.exports = {
 
         let today = new Date().toDateString();
 
-        pool.getConnection((err, con) => {
-            if (err) console.log(`Connection error setting label: ${err}`);
+        pool.query(`INSERT INTO labels (userID, label, date) VALUES (
+            '${userAccount.id}',
+            '${newLabel}',
+            '${today}'
+        )`, (err2, result) => {
+            if (err2) {
+                console.log(`Query error setting label: ${err2}`);
+                interaction.reply(`Error setting label.`);
+                return;
+            }
 
-            con.query(`INSERT INTO labels (userID, label, date) VALUES (
-                '${userAccount.id}',
-                '${newLabel}',
-                '${today}'
-            )`, (err2, result) => {
-                if (err2) {
-                    console.log(`Query error setting label: ${err2}`);
-                    interaction.reply(`Error setting label.`);
-                    return;
-                }
-
-                interaction.reply(`Set today's label to: ${newLabel}`);
-                console.log(`${interaction.user.username} set today's label to \"${newLabel}\"`);
-                con.release();
-            })
-        });
+            interaction.reply(`Set today's label to: ${newLabel}`);
+            console.log(`${interaction.user.username} set today's label to \"${newLabel}\"`);
+        })
     }
 }

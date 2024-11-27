@@ -39,41 +39,36 @@ module.exports = {
     
             let historyEmbeds = [];
             
-            pool.getConnection((err, con) => {
-                if (err) console.log(`Connection error in history: ${err}`);
-    
-                for (let i = days - 1; i >= 0; i--) {
-                    let date = new Date(Date.parse(startDay) - (86400000 * i)).toDateString();
-    
-                    con.query(`SELECT * FROM lifts WHERE userID = '${userAccount.id}' AND date = '${date}';`, (err2, results) => {
-                        if (err2) console.log(`Error reading data for history: ${err2}`);
-    
-                        con.query(`SELECT * FROM labels WHERE userID = '${userAccount.id}' AND date = '${date}' ORDER BY labelid DESC;`, (err3, labels) => {
-                            if (err3) console.log(`Error querying labels for history: ${err3}`);
-    
-                            let embeds = WorkoutDay.getEmbeds(results, labels.length > 0 ? labels[0].label : null);
-                            
-                            if (embeds) {
-                                for (let x = 0; x < embeds.length; x++) {
-                                    historyEmbeds.push(embeds[x]);
-                                }
+            for (let i = days - 1; i >= 0; i--) {
+                let date = new Date(Date.parse(startDay) - (86400000 * i)).toDateString();
+
+                pool.query(`SELECT * FROM lifts WHERE userID = '${userAccount.id}' AND date = '${date}';`, (err, results) => {
+                    if (err) console.log(`Error reading data for history: ${err}`);
+
+                    pool.query(`SELECT * FROM labels WHERE userID = '${userAccount.id}' AND date = '${date}' ORDER BY labelid DESC;`, (err2, labels) => {
+                        if (err2) console.log(`Error querying labels for history: ${err2}`);
+
+                        let embeds = WorkoutDay.getEmbeds(results, labels.length > 0 ? labels[0].label : null);
+                        
+                        if (embeds) {
+                            for (let x = 0; x < embeds.length; x++) {
+                                historyEmbeds.push(embeds[x]);
+                            }
+                        } else {
+                            historyEmbeds.push(new EmbedBuilder().setTitle("No history.").setAuthor({ name: date }));
+                        }
+                        
+                        if (i == 0) {
+                            if (startDate) {
+                                console.log(`${interaction.user.username} fetched ${days} days of history from ${new Date(Date.parse(startDate)).toDateString()}.`);
                             } else {
-                                historyEmbeds.push(new EmbedBuilder().setTitle("No history.").setAuthor({ name: date }));
+                                console.log(`${interaction.user.username} fetched ${days} days of history from most recent date.`)
                             }
-                            
-                            if (i == 0) {
-                                if (startDate) {
-                                    console.log(`${interaction.user.username} fetched ${days} days of history from ${new Date(Date.parse(startDate)).toDateString()}.`);
-                                } else {
-                                    console.log(`${interaction.user.username} fetched ${days} days of history from most recent date.`)
-                                }
-                                interaction.reply({ embeds: historyEmbeds });
-                                con.release();
-                            }
-                        });
-                    })
-                }
-            });
+                            interaction.reply({ embeds: historyEmbeds });
+                        }
+                    });
+                })
+            }
         }
     }
 }
