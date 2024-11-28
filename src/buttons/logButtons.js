@@ -1,6 +1,5 @@
-const { isFunction } = require("vega");
-const { findAccount } = require("../..")
-const generateReplyString = require("../generateLogReplyString");
+const { findAccount } = require("..")
+const generateReplyString = require("../utils/generateLogReplyString");
 const { ActionRowBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, ButtonBuilder, ButtonStyle, ComponentType } = require("discord.js");
 
 module.exports = async (interaction, movement, weight, reps, sets, date) => {

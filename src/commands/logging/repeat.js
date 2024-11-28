@@ -1,6 +1,6 @@
 const { ApplicationCommandOptionType } = require("discord.js");
 const { findAccount } = require("../../index.js");
-const logButtons = require("../../utils/buttons/logButtons.js");
+const logButtons = require("../../buttons/logButtons.js");
 
 module.exports = {
     name: "repeat",

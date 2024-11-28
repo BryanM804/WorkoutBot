@@ -1,7 +1,6 @@
 const vega = require("vega");
 const { createPNGStream } = require("canvas");
 const fs = require("fs");
-const getRecentAverage = require("./getRecentAverage");
 
 module.exports = (data, fileNum, type, timeframe, callback) => {
     if (data.data.length < 2) {
