@@ -1,9 +1,6 @@
-const { ApplicationCommandOptionType, EmbedBuilder, AttachmentBuilder } = require("discord.js");
+const { ApplicationCommandOptionType, ActionRowBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, ComponentType } = require("discord.js");
 const { findAccount } = require("../../index.js");
-const getAllFiles = require("../../utils/getAllFiles.js")
-const generateGraph = require("../../utils/generateGraph.js");
-const getGraphData = require("../../account/getGraphData.js");
-const getRecentAverage = require("../../utils/getRecentAverage.js");
+const getGraphMessage = require("../../utils/getGraphMessage.js");
 
 module.exports = {
     name: "graph",
@@ -58,86 +55,52 @@ module.exports = {
     callback: (client, interaction) => {
         const userAccount = findAccount(interaction.user.username, interaction.user.id);
         const movement = interaction.options.get("movement").value;
-        const type = interaction.options.get("type")?.value ? interaction.options.get("type").value : "sets";
-        const timeframe = interaction.options.get("timeframe")?.value ? interaction.options.get("timeframe").value : "all";
+        let type = interaction.options.get("type")?.value ? interaction.options.get("type").value : "sets";
+        let timeframe = interaction.options.get("timeframe")?.value ? interaction.options.get("timeframe").value : "all";
 
-        getGraphData(userAccount, movement, type, timeframe, (data) => {
-            let fileNum = 0;
+        getGraphMessage(userAccount, movement, type, timeframe, async (reply) => {
+            const typeMenu = new StringSelectMenuBuilder()
+                .setCustomId("type")
+                .setPlaceholder("Change Type");
+            const timeMenu = new StringSelectMenuBuilder()
+                .setCustomId("time")
+                .setPlaceholder("Change Time");
+            const types = ["sets", "strength", "best"];
+            const typeLabels = ["Average Set", "Strength", "Best Set"];
+            const times = ["all", "recent", "today"];
+            const timeLabels = ["All", "Recent", "Today"];
+            for (let i = 0; i < types.length; i++) {
+                typeMenu.addOptions(new StringSelectMenuOptionBuilder()
+                    .setValue(types[i])
+                    .setLabel(typeLabels[i]));
+                timeMenu.addOptions(new StringSelectMenuOptionBuilder()
+                    .setValue(times[i])
+                    .setLabel(timeLabels[i]));
+            }
 
-            const files = getAllFiles("./src/graphs");
-            for(const file of files) {
-                const end = file.split("/").pop().substring(5);
-                const graphNumber = parseInt(end.replace(".png", ""));
-                if (graphNumber >= fileNum) {
-                    fileNum = graphNumber + 1;
+            const typeRow = new ActionRowBuilder().addComponents(typeMenu);
+            const timeRow = new ActionRowBuilder().addComponents(timeMenu);
+
+            const messageInteraction = await interaction.reply({...reply, components: [typeRow, timeRow]});
+            const stringCollector = messageInteraction.createMessageComponentCollector({ componentType: ComponentType.StringSelect });
+
+            stringCollector.on("collect", async i => {
+                if (i.user.id == interaction.user.id) {
+                    if (i.customId == "type")
+                        type = i.values[0]
+                    else if (i.customId == "time")
+                        timeframe = i.values[0]
+
+                    getGraphMessage(userAccount, movement, type, timeframe, (newReply) => {
+                        interaction.editReply(newReply)
+                    })
                 }
-            }
+            })
 
-            let dataOb = {
-                "data": data
-            }
-
-            let adj, timeAdj;
-            switch (type) {
-                case "sets":
-                    adj = "average ";
-                    break;
-                case "strength":
-                    adj = "strongest ";
-                    break;
-                case "best":
-                    adj = "best ";
-                    break;
-            }
-            switch (timeframe) {
-                case "all":
-                    timeAdj = "";
-                    break;
-                case "recent":
-                    timeAdj = "recent ";
-                    break;
-                case "today":
-                    timeAdj = "current sets of ";
-                    adj = "";
-                    break;
-            }
-            const graphEmbed = new EmbedBuilder()
-                .setTitle(`${interaction.user.username}'s ${adj}${timeAdj}${movement}`);
-
-            // Unfortunate giant duplicated code
-            if (timeframe == "today") {
-                getRecentAverage(userAccount, movement, null, (recentAvg) => {
-                    dataOb["baseline"] = recentAvg;
-
-                    generateGraph(dataOb, fileNum, type, timeframe, (result) => {
-                        if (!result) {
-                            interaction.reply({ content: "Not enough data for " + movement, ephemeral: true });
-                            console.log(`${interaction.user.username} tried to graph history for ${movement} but doesn't have enough data.`);
-                        } else {
-                            const graph = new AttachmentBuilder("./src/graphs/graph" + fileNum + ".png");
-                                   
-                            graphEmbed.setImage("attachment://graph" + fileNum + ".png");
-        
-                            interaction.reply({ embeds: [graphEmbed], files: [graph] });
-                            console.log(`${interaction.user.username} graphed history of their ${movement}.`)
-                        }
-                    });
-                })
-            } else {
-                generateGraph(dataOb, fileNum, type, timeframe, (result) => {
-                    if (!result) {
-                        interaction.reply({ content: "Not enough data for " + movement, ephemeral: true });
-                        console.log(`${interaction.user.username} tried to graph history for ${movement} but doesn't have enough data.`);
-                    } else {
-                        const graph = new AttachmentBuilder("./src/graphs/graph" + fileNum + ".png");
-
-                        graphEmbed.setImage("attachment://graph" + fileNum + ".png");
-    
-                        interaction.reply({ embeds: [graphEmbed], files: [graph] });
-                        console.log(`${interaction.user.username} graphed history of their ${movement}.`)
-                    }
-                });
-            }
+            // Clear buttons automatically after ~15 minutes (Max Webhook time)
+            setTimeout(() => {
+                interaction.editReply({components: []});
+            }, 895000);
         });
     }
                 

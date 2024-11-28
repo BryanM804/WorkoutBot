@@ -1,9 +1,6 @@
-const { ApplicationCommandOptionType, EmbedBuilder } = require("discord.js");
+const { ApplicationCommandOptionType, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle } = require("discord.js");
 const { findAccount } = require("../../index.js");
-const WorkoutDay = require("../../WorkoutDay.js");
 const getHistoryEmbeds = require("../../account/getHistoryEmbeds.js");
-const historyButtons = require("../../buttons/historyButtons.js");
-const pool = require("../../pool.js");
 
 module.exports = {
     name: "history",
@@ -19,16 +16,55 @@ module.exports = {
         let startDate = interaction.options.get("date")?.value ?? null;
 
         const userAccount = findAccount(interaction.user.username, interaction.user.id);
-        let day;
+        let date;
 
         if (startDate) {
-            day = new Date(Date.parse(startDate)).toDateString();
+            date = new Date(Date.parse(startDate)).toDateString();
         } else {
-            day = new Date().toDateString();
+            date = new Date().toDateString();
         }
         
-        getHistoryEmbeds(interaction, day, (historicalEmbedments) => {
-            historyButtons(interaction, historicalEmbedments, day);
+        getHistoryEmbeds(interaction, date, async (historyEmbeds) => {
+            const leftButton = new ButtonBuilder()
+                .setCustomId("prevHistory")
+                .setLabel("<")
+                .setStyle(ButtonStyle.Primary);
+
+            const refreshButton = new ButtonBuilder()
+                .setCustomId("refresh")
+                .setLabel("🔁")
+                .setStyle(ButtonStyle.Primary);
+
+            const rightButton = new ButtonBuilder()
+                .setCustomId("nextHistory")
+                .setLabel(">")
+                .setStyle(ButtonStyle.Primary);
+
+            const buttonRow = new ActionRowBuilder()
+                .addComponents([leftButton, refreshButton, rightButton]);
+
+            const buttonReply = await interaction.reply({ embeds: historyEmbeds, components: [buttonRow] });
+            const buttonCollector = buttonReply.createMessageComponentCollector({ componentType: ComponentType.Button });
+
+            buttonCollector.on("collect", async i => {
+                if (i.user.id == interaction.user.id) {
+                    // Advance the date forward or back a day depending on button
+                    if (i.customId == "prevHistory") {
+                        date = new Date(Date.parse(date) - 86400000).toDateString();
+                    } else if (i.customId == "nextHistory") {
+                        date = new Date(Date.parse(date) + 86400000).toDateString();
+                    }
+                    
+                    getHistoryEmbeds(interaction, date, (historicalEmbedments) => {
+                        interaction.editReply({ embeds: historicalEmbedments });
+                    });
+                }
+            })
+
+            // Clear buttons automatically after ~15 minutes (Max Webhook time)
+            setTimeout(() => {
+                interaction.editReply({components: []});
+            }, 895000);
         });
     }
 }

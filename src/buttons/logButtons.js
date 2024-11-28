@@ -1,4 +1,4 @@
-const { findAccount } = require("..")
+const { findAccount } = require("../index")
 const generateReplyString = require("../utils/generateLogReplyString");
 const { ActionRowBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, ButtonBuilder, ButtonStyle, ComponentType } = require("discord.js");
 
@@ -120,52 +120,56 @@ module.exports = async (interaction, movement, weight, reps, sets, date) => {
     const buttonCollector = buttonResponse.createMessageComponentCollector({ componentType: ComponentType.Button })
 
     stringCollector.on("collect", async i => {
-        if (i.customId == "repSelect" && i.user.username == interaction.user.username) {
-            repChange = parseInt(i.values[0]);
-            console.log(`${i.user.username} rep change: ${repChange}`);
-        } else if (i.customId == "weightSelect" && i.user.username == interaction.user.username) {
-            weightChange = parseInt(i.values[0]);
-            console.log(`${i.user.username} weight change: ${weightChange}`);
+        if (i.user.id == interaction.user.id) {
+            if (i.customId == "repSelect") {
+                repChange = parseInt(i.values[0]);
+                console.log(`${i.user.username} rep change: ${repChange}`);
+            } else if (i.customId == "weightSelect") {
+                weightChange = parseInt(i.values[0]);
+                console.log(`${i.user.username} weight change: ${weightChange}`);
+            }
         }
     })
 
     buttonCollector.on("collect", async i => {
         // Undo removes 1 set at a time from the current block
-        if (i.customId == "undo" && i.user.username == interaction.user.username) {
-            userAccount.undoSet(1, (undid) => {
-                console.log(`${interaction.user.username} undid 1 set.`);
-                if (messageContents.indexOf("\n") != -1) {
-                    messageContents = messageContents.substring(0, messageContents.lastIndexOf("\n"));
-                    interaction.editReply({ content: messageContents });
-                } else {
-                    interaction.editReply({ content: "Successfully undid set.", components: [] });
-                }
-            })
-        } else if (i.customId == "repeat" && i.user.username == interaction.user.username) {
-            const oldLevel = userAccount.level;
-                weight += weightChange;
-                reps += repChange;
-
-            userAccount.logSet(movement, weight, reps, date, () => {
-                if (userAccount.level > oldLevel) {
-                    interaction.channel.send(`${interaction.user} has leveled up to level ${userAccount.level}!`);
-                }
-
-                // Gui resets selection every submission
-                repChange = 0;
-                weightChange = 0;
-
-                console.log(`${interaction.user.username} repeated ${movement} ${weight} lbs x ${reps}`);
-                messageContents += "\n" + generateReplyString(movement, weight, reps, 1);
-                
-                updateWeights();
-                weightRow.setComponents(weightSelect);
-
-                updateReps();
-                repRow.setComponents(repsSelect);
-
-                interaction.editReply({ content: messageContents, components: [repRow, weightRow, buttonRow] });
-            })
+        if (i.user.id == interaction.user.id) {
+            if (i.customId == "undo") {
+                userAccount.undoSet(1, (undid) => {
+                    console.log(`${interaction.user.username} undid 1 set.`);
+                    if (messageContents.indexOf("\n") != -1) {
+                        messageContents = messageContents.substring(0, messageContents.lastIndexOf("\n"));
+                        interaction.editReply({ content: messageContents });
+                    } else {
+                        interaction.editReply({ content: "Successfully undid set.", components: [] });
+                    }
+                })
+            } else if (i.customId == "repeat") {
+                const oldLevel = userAccount.level;
+                    weight += weightChange;
+                    reps += repChange;
+    
+                userAccount.logSet(movement, weight, reps, date, () => {
+                    if (userAccount.level > oldLevel) {
+                        interaction.channel.send(`${interaction.user} has leveled up to level ${userAccount.level}!`);
+                    }
+    
+                    // Gui resets selection every submission
+                    repChange = 0;
+                    weightChange = 0;
+    
+                    console.log(`${interaction.user.username} repeated ${movement} ${weight} lbs x ${reps}`);
+                    messageContents += "\n" + generateReplyString(movement, weight, reps, 1);
+                    
+                    updateWeights();
+                    weightRow.setComponents(weightSelect);
+    
+                    updateReps();
+                    repRow.setComponents(repsSelect);
+    
+                    interaction.editReply({ content: messageContents, components: [repRow, weightRow, buttonRow] });
+                })
+            }
         }
     })
 }
