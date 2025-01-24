@@ -12,7 +12,7 @@ module.exports = {
             type: ApplicationCommandOptionType.String
         }
     ],
-    callback: (client, interaction) => {
+    callback: async (client, interaction) => {
         let startDate = interaction.options.get("date")?.value ?? null;
 
         const userAccount = findAccount(interaction.user.username, interaction.user.id);
@@ -24,47 +24,45 @@ module.exports = {
             date = new Date().toDateString();
         }
         
-        getHistoryEmbeds(interaction, date, async (historyEmbeds) => {
-            const leftButton = new ButtonBuilder()
-                .setCustomId("prevHistory")
-                .setLabel("<")
-                .setStyle(ButtonStyle.Primary);
+        const historyEmbeds = await getHistoryEmbeds(interaction, date)
+        const leftButton = new ButtonBuilder()
+            .setCustomId("prevHistory")
+            .setLabel("<")
+            .setStyle(ButtonStyle.Primary);
 
-            const refreshButton = new ButtonBuilder()
-                .setCustomId("refresh")
-                .setLabel("🔁")
-                .setStyle(ButtonStyle.Primary);
+        const refreshButton = new ButtonBuilder()
+            .setCustomId("refresh")
+            .setLabel("🔁")
+            .setStyle(ButtonStyle.Primary);
 
-            const rightButton = new ButtonBuilder()
-                .setCustomId("nextHistory")
-                .setLabel(">")
-                .setStyle(ButtonStyle.Primary);
+        const rightButton = new ButtonBuilder()
+            .setCustomId("nextHistory")
+            .setLabel(">")
+            .setStyle(ButtonStyle.Primary);
 
-            const buttonRow = new ActionRowBuilder()
-                .addComponents([leftButton, refreshButton, rightButton]);
+        const buttonRow = new ActionRowBuilder()
+            .addComponents([leftButton, refreshButton, rightButton]);
 
-            const buttonReply = await interaction.reply({ embeds: historyEmbeds, components: [buttonRow] });
-            const buttonCollector = buttonReply.createMessageComponentCollector({ componentType: ComponentType.Button });
+        const buttonReply = await interaction.reply({ embeds: historyEmbeds, components: [buttonRow] });
+        const buttonCollector = buttonReply.createMessageComponentCollector({ componentType: ComponentType.Button });
 
-            buttonCollector.on("collect", async i => {
-                if (i.user.id == interaction.user.id) {
-                    // Advance the date forward or back a day depending on button
-                    if (i.customId == "prevHistory") {
-                        date = new Date(Date.parse(date) - 86400000).toDateString();
-                    } else if (i.customId == "nextHistory") {
-                        date = new Date(Date.parse(date) + 86400000).toDateString();
-                    }
-                    
-                    getHistoryEmbeds(interaction, date, (historicalEmbedments) => {
-                        interaction.editReply({ embeds: historicalEmbedments });
-                    });
+        buttonCollector.on("collect", async i => {
+            if (i.user.id == interaction.user.id) {
+                // Advance the date forward or back a day depending on button
+                if (i.customId == "prevHistory") {
+                    date = new Date(Date.parse(date) - 86400000).toDateString();
+                } else if (i.customId == "nextHistory") {
+                    date = new Date(Date.parse(date) + 86400000).toDateString();
                 }
-            })
+                
+                let historicalEmbedments = await getHistoryEmbeds(interaction, date)
+                interaction.editReply({ embeds: historicalEmbedments });
+            }
+        })
 
-            // Clear buttons automatically after ~15 minutes (Max Webhook time)
-            setTimeout(() => {
-                interaction.editReply({components: []});
-            }, 895000);
-        });
+        // Clear buttons automatically after ~15 minutes (Max Webhook time)
+        setTimeout(() => {
+            interaction.editReply({components: []});
+        }, 895000);
     }
 }

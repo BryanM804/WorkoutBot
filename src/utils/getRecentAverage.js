@@ -1,6 +1,6 @@
 const pool = require("../pool");
 
-module.exports = (user, movement, date=null, callback) => {
+module.exports = async (user, movement, date=null) => {
     let today;
     if (date != null) {
         today = date;
@@ -22,6 +22,6 @@ module.exports = (user, movement, date=null, callback) => {
     pool.query(qry, (err, results) => {
         if (err) console.log(`Query Error fetching recent average: ${err}`);
 
-        if (callback) callback(results[0]["AVG(settotal)"]);
+        return results[0]["AVG(settotal)"];
     })
 }

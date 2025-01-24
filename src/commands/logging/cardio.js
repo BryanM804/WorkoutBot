@@ -34,7 +34,7 @@ module.exports = {
             type: ApplicationCommandOptionType.Number
         }
     ],
-    callback: (client, interaction) => {
+    callback: async (client, interaction) => {
         const movement = interaction.options.get("movement").value;
         const time = interaction.options.get("time").value;
         const date = interaction.options.get("date")?.value ? new Date(Date.parse(interaction.options.get("date")?.value)).toDateString() : null;
@@ -58,22 +58,21 @@ module.exports = {
             let tempAccount = findAccount(interaction.user.username, interaction.user.id)
             let prevLvl = tempAccount.level;
 
-            tempAccount.logCardio(movement, time, date, note, distance, () => {
-                //Reply in chat (will likely change to an embed later)
+            await tempAccount.logCardio(movement, time, date, note, distance)
+            //Reply in chat (will likely change to an embed later)
 
-                if (date) {
-                    replyString += ` on ${date}`;
-                }
-                replyString += `.`;
+            if (date) {
+                replyString += ` on ${date}`;
+            }
+            replyString += `.`;
 
-                console.log(`${interaction.user.username} cardio: ${replyString}`);
+            console.log(`${interaction.user.username} cardio: ${replyString}`);
 
-                interaction.reply(replyString);
+            interaction.reply(replyString);
 
-                if (tempAccount.level > prevLvl) {
-                    interaction.channel.send(`${interaction.user} has leveled up to level ${tempAccount.level}!`);
-                }
-            });
+            if (tempAccount.level > prevLvl) {
+                interaction.channel.send(`${interaction.user} has leveled up to level ${tempAccount.level}!`);
+            }
         }
     }
 }

@@ -12,35 +12,32 @@ module.exports = {
             type: ApplicationCommandOptionType.String
         }
     ],
-    callback: (client, interaction) => {
+    callback: async (client, interaction) => {
         const account = findAccount(interaction.user.username, interaction.user.id);
         let date = new Date(Date.parse(interaction.options.get("date")?.value)).toDateString();
         if (date == "Invalid Date") {
             date = new Date().toDateString();
         }
 
-        getAverageTimeSets(account, date, (average) => {
-            const embed = new EmbedBuilder()
-                .setTitle(date);
+        const average = await getAverageTimeSets(account, date);
+        const embed = new EmbedBuilder()
+            .setTitle(date);
 
-            let avgTimeStr = `Average time between sets: ${Math.floor(average / 60)} minutes`;
-            if (average % 60 != 0) {
-                avgTimeStr += ` ${average % 60} seconds`
-            }
-            embed.setFooter({text: avgTimeStr});
+        let avgTimeStr = `Average time between sets: ${Math.floor(average / 60)} minutes`;
+        if (average % 60 != 0) {
+            avgTimeStr += ` ${average % 60} seconds`
+        }
+        embed.setFooter({text: avgTimeStr});
 
-            account.getBreakdown(date, (breakdown) => {
-                account.getCardio(date, (cardio) => {
-                    embed.addFields({name: "Muscle Groups", value: breakdown[0]})
-                    embed.addFields({name: "Scores", value: breakdown[1]})
+        const breakdown = await account.getBreakdown(date)
+        const cardio = await account.getCardio(date)
+        embed.addFields({name: "Muscle Groups", value: breakdown[0]})
+        embed.addFields({name: "Scores", value: breakdown[1]})
 
-                    if (cardio != '') {
-                        embed.addFields({name: "Cardio:", value: cardio})
-                    }
+        if (cardio != '') {
+            embed.addFields({name: "Cardio:", value: cardio})
+        }
 
-                    interaction.reply({embeds: [embed]});
-                })
-            })
-        })
+        interaction.reply({embeds: [embed]});
     }
 }

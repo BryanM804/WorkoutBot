@@ -54,14 +54,13 @@ module.exports = {
 
             let callNum = 1;
             for (let i = 0; i < sets; i++) {
-                tempAccount.logSet(movement, weight, reps, date, () => {
-                    if (tempAccount.level > prevLvl) {
-                        if (callNum === sets)
-                            interaction.channel.send(`${interaction.user} has leveled up to level ${tempAccount.level}!`);
-                        else
-                            callNum++;
-                    }
-                });
+                await tempAccount.logSet(movement, weight, reps, date)
+                if (tempAccount.level > prevLvl) {
+                    if (callNum === sets)
+                        interaction.channel.send(`${interaction.user} has leveled up to level ${tempAccount.level}!`);
+                    else
+                        callNum++;
+                }
             }
 
             logButtons(interaction, movement, weight, reps, sets, date);

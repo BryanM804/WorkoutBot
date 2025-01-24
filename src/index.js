@@ -103,7 +103,7 @@ const findAccount = function(name, id, createNew = true){
 }
 
 // Sorts accounts array by the type specified
-const sortAccounts = function(sortby, callback) {
+const sortAccounts = async function(sortby) {
     switch (sortby) {
         case "Level":
             accounts.sort((a, b) => {
@@ -128,17 +128,16 @@ const sortAccounts = function(sortby, callback) {
             let callNum = 1;
 
             for (let i = 0; i < accounts.length; i++) {
-                accounts[i].getTotalDays((total) => {
-                    if (callNum == accounts.length - 1) {
-                        accounts.sort((a, b) => {
-                            return (b.totalDays - a.totalDays);
-                        });
+                total = await accounts[i].getTotalDays()
+                if (callNum == accounts.length - 1) {
+                    accounts.sort((a, b) => {
+                        return (b.totalDays - a.totalDays);
+                    });
 
-                        if (callback) callback(accounts);
-                    } else {
-                        callNum++;
-                    }
-                });
+                    return accounts;
+                } else {
+                    callNum++;
+                }
             }
             break;
         case "Cardio Total":
@@ -173,7 +172,7 @@ const sortAccounts = function(sortby, callback) {
             break;
     }
 
-    if (callback && sortby != "Days Logged") callback(accounts);
+    if (sortby != "Days Logged") return accounts;
 }
 
 try {

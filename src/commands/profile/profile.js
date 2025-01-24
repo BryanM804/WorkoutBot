@@ -12,7 +12,7 @@ module.exports = {
             type: ApplicationCommandOptionType.User
         }
     ],
-    callback: (client, interaction) => {
+    callback: async (client, interaction) => {
         const otherUser = interaction.options.get("user")?.user ?? null;
 
         let profileUser;
@@ -39,44 +39,43 @@ module.exports = {
             const user = findAccount(profileUser.username, profileUser.id);
 
             // Needs user for the avatarURL
-            user.getStatsFromDB(false, (result) => {
-    
-                let profileEmbed = new EmbedBuilder()
+            let result = await user.getStatsFromDB(false)
+
+            let profileEmbed = new EmbedBuilder()
                 .setTitle(user.name)
                 .setThumbnail(profileUser.avatarURL())
                 .setFooter({ text: `Created ${user.creationDate}` })
                 .addFields({ name: `Level ${user.level}`, value: `XP: ${user.xp}/${user.level * 1500}` });
-                if (user.bodyweight > 0) {
-                    profileEmbed.addFields({ name: `Body weight:`, value: `${user.bodyweight}lbs` });
-                }
-                profileEmbed.addFields({ name: `Total Weight Lifted:`, value: ` ${user.totalweight}lbs`, inline: true })
+            if (user.bodyweight > 0) {
+                profileEmbed.addFields({ name: `Body weight:`, value: `${user.bodyweight}lbs` });
+            }
+            profileEmbed.addFields({ name: `Total Weight Lifted:`, value: ` ${user.totalweight}lbs`, inline: true })
                 .addFields({ name: `Total Sets Logged:`, value: `${user.totalsets} sets`, inline: true })
                 .addFields({ name: "Rest Days:", value: getRestDayString(user), inline: true });
-                if (user.squat > 0) {
-                    profileEmbed.addFields({ name: `Squat:`, value: `${user.squat}lbs`, inline: true });
-                }
-                if (user.bench > 0) {
-                    profileEmbed.addFields({ name: `Bench:`, value: `${user.bench}lbs`, inline: true });
-                }
-                if (user.deadlift > 0) {
-                    profileEmbed.addFields({ name: `Deadlift:`, value: `${user.deadlift}lbs`, inline: true });
-                }
-                
-                if (user.level > 10 && user.level < 25) {
-                    profileEmbed.setColor(0xFFFFFF)
-                } else if (user.level >= 25 && user.level < 50) {
-                    profileEmbed.setColor(0x94D4FF)
-                } else if (user.level >= 50 && user.level < 75) {
-                    profileEmbed.setColor(0x0FFF97)
-                } else if (user.level >= 75 && user.level < 100) {
-                    profileEmbed.setColor(0xFF4D2E)
-                } else if (user.level >= 100) {
-                    profileEmbed.setColor(0xF8FF2E)
-                }
+            if (user.squat > 0) {
+                profileEmbed.addFields({ name: `Squat:`, value: `${user.squat}lbs`, inline: true });
+            }
+            if (user.bench > 0) {
+                profileEmbed.addFields({ name: `Bench:`, value: `${user.bench}lbs`, inline: true });
+            }
+            if (user.deadlift > 0) {
+                profileEmbed.addFields({ name: `Deadlift:`, value: `${user.deadlift}lbs`, inline: true });
+            }
+            
+            if (user.level > 10 && user.level < 25) {
+                profileEmbed.setColor(0xFFFFFF)
+            } else if (user.level >= 25 && user.level < 50) {
+                profileEmbed.setColor(0x94D4FF)
+            } else if (user.level >= 50 && user.level < 75) {
+                profileEmbed.setColor(0x0FFF97)
+            } else if (user.level >= 75 && user.level < 100) {
+                profileEmbed.setColor(0xFF4D2E)
+            } else if (user.level >= 100) {
+                profileEmbed.setColor(0xF8FF2E)
+            }
 
-                interaction.reply({ embeds: [profileEmbed] });
-                console.log(`${profileUser.username} profile fetched.`);
-            });
+            interaction.reply({ embeds: [profileEmbed] });
+            console.log(`${profileUser.username} profile fetched.`);
         }
     }
 }

@@ -1,6 +1,6 @@
 const pool = require("../pool");
 
-module.exports = (userAccount, date, callback) => {
+module.exports = async (userAccount, date) => {
     if (userAccount == null) {
         console.log(`Invalid user account trying to get time data`);
         return -1;
@@ -33,6 +33,6 @@ module.exports = (userAccount, date, callback) => {
             count++;
         }
 
-        if (callback) callback(Math.ceil((avg / count) / 1000));
+        return Math.ceil((avg / count) / 1000);
     })
 }

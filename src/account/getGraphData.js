@@ -1,6 +1,6 @@
 const pool = require("../pool");
 
-module.exports = (user, exercise, type, timeframe, callback) => {
+module.exports = async (user, exercise, type, timeframe) => {
 // Gets data for use in graphing
     let data = [];
 
@@ -80,6 +80,6 @@ module.exports = (user, exercise, type, timeframe, callback) => {
             }
         }
 
-        if (callback) callback(data);
+        return data;
     });
 }

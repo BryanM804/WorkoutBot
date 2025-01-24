@@ -86,15 +86,15 @@ module.exports = {
 
             // Averages are rounded so they only display one decimal place
             let statsEmbed = new EmbedBuilder()
-            .setTitle(`${this.name}'s ${movement}`)
-            .addFields({ name: "\0", value: "**__30 Day__**" })
-            .addFields({ name: "Average Weight", value: `${Math.round(thirtyDayAvgWeight * 10) / 10}lbs`, inline: true })
-            .addFields({ name: "Average Reps", value: `${Math.round(thirtyDayAvgReps * 10) / 10}`, inline: true })
-            .addFields({ name: "\0", value: "**__Records__**" })
-            .addFields({ name: "Most Weight", value: `${mostWeight}lbs on ${mostWeightDate}`, inline: true })
-            .addFields({ name: "Most Reps", value: `${mostReps} reps on ${mostRepsDate}`, inline: true })
-            .addFields({ name: "Best Set", value: `${bestSetWeight}lbs x ${bestSetReps} reps = ${bestTotal} on ${bestSetDate}`, inline: true })
-            .setFooter({ text: `Total Sets: ${lifetimeCount}\nSets recorded in the last 30 days: ${thirtyDayCount}`})
+                .setTitle(`${this.name}'s ${movement}`)
+                .addFields({ name: "\0", value: "**__30 Day__**" })
+                .addFields({ name: "Average Weight", value: `${Math.round(thirtyDayAvgWeight * 10) / 10}lbs`, inline: true })
+                .addFields({ name: "Average Reps", value: `${Math.round(thirtyDayAvgReps * 10) / 10}`, inline: true })
+                .addFields({ name: "\0", value: "**__Records__**" })
+                .addFields({ name: "Most Weight", value: `${mostWeight}lbs on ${mostWeightDate}`, inline: true })
+                .addFields({ name: "Most Reps", value: `${mostReps} reps on ${mostRepsDate}`, inline: true })
+                .addFields({ name: "Best Set", value: `${bestSetWeight}lbs x ${bestSetReps} reps = ${bestTotal} on ${bestSetDate}`, inline: true })
+                .setFooter({ text: `Total Sets: ${lifetimeCount}\nSets recorded in the last 30 days: ${thirtyDayCount}`})
 
             interaction.reply({ embeds: [statsEmbed] });
             console.log(`${interaction.user.username} fetched stats for their ${movement}.`);

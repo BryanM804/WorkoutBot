@@ -9,7 +9,7 @@ class Account{
         this.getStatsFromDB(false);
     }
 
-    getStatsFromDB(logInfo = false, callback) {
+    async getStatsFromDB(logInfo = false) {
         pool.query(`SELECT * FROM accounts WHERE id = '${this.id}'`, (err, result) => {
             if (err) console.log(`Query error getting stats: ${err}`);
             if (result.length > 0) {
@@ -29,20 +29,20 @@ class Account{
 
                 if (this.restDays.length > 0) this.restDays.pop(); // Split leaves a '' in the array
 
-                if (callback) callback(true);
+                return true;
             } else {
                 // Make a new account in the db
                 pool.query(`INSERT INTO accounts (id, name, bodyweight, level, xp, creationDate, skiptotal, skipstreak, squat, bench, deadlift) VALUES (
                     '${this.id}', '${this.name}', 0, 1, 0, '${new Date().toDateString()}', 0, 0, 0, 0, 0)`, (err2, result) => {
                         if (err2) console.log(`Query error creating account: ${err2}`);
-                        if (callback) callback(false);
+                        return false;
                     })
             }
             if (logInfo) console.log(result[0]);
         });
     }
 
-    writeStatsToDB(logInfo = false, callback) {
+    async writeStatsToDB(logInfo = false) {
         let restDaysString = "";
         for (let i = 0; i < this.restDays.length; i++) {
             restDaysString += parseInt(this.restDays[i]) + " ";
@@ -72,13 +72,13 @@ class Account{
                     WHERE id = '${this.id}';`, (err2, result) => {
                     if (err2) console.log(`Query error: ${err2}`);
                     if (logInfo) console.log(result);
-                    if (callback) callback();
+                    return;
                 })
             })
         })
     }
 
-    logSet(movement, weight, reps, date, callback){
+    async logSet(movement, weight, reps, date){
         let today;
         let time = new Date().toLocaleTimeString("en-US");
 
@@ -99,7 +99,7 @@ class Account{
             ${Set.getSetTotal(movement, weight, reps, this.bodyweight)},
             ${Date.parse(today)},
             '${time}'
-        )`, (err, results) => {
+        )`, async (err, results) => {
             // This should throw an error or else the accounts and lifts tables will desync (ask me how I know)
             if (err) {
                 console.log(`Error inserting new set`);
@@ -114,16 +114,16 @@ class Account{
             }
 
             this.skipStreak = 0;
-            this.writeStatsToDB();
-            if (callback) callback();
+            await this.writeStatsToDB();
+            return;
         });
     }
 
     
-    repeatSet(weight, reps, repeats, callback){
+    async repeatSet(weight, reps, repeats){
         let repeatWeight, repeatReps;
 
-        pool.query(`SELECT * FROM lifts WHERE userID = '${this.id}' ORDER BY dateval DESC, setid DESC;`, (err, sets) => {
+        pool.query(`SELECT * FROM lifts WHERE userID = '${this.id}' ORDER BY dateval DESC, setid DESC;`, async (err, sets) => {
             if (err) console.log(`Querying error in repeat set: ${err}`);
 
             if (sets.length > 0) {
@@ -132,20 +132,19 @@ class Account{
                 repeatReps = reps ? reps : lastSet.reps;
 
                 for (let i = 0; i < repeats - 1; i++) {
-                    this.logSet(lastSet.movement, repeatWeight, repeatReps, sets[0].date);
+                    await this.logSet(lastSet.movement, repeatWeight, repeatReps, sets[0].date);
                 }
 
                 // I want the callback for the last one.
-                this.logSet(lastSet.movement, repeatWeight, repeatReps, sets[0].date, () => {
-                    if (callback) callback(new Set(lastSet.movement, repeatWeight, repeatReps, this.bodyweight));
-                });
+                await this.logSet(lastSet.movement, repeatWeight, repeatReps, sets[0].date)
+                return new Set(lastSet.movement, repeatWeight, repeatReps, this.bodyweight);
             } else {
-                if (callback) callback(false);
+                return false;
             }
         });
     }
 
-    logCardio(movement, time, date, note, distance, callback) {
+    async logCardio(movement, time, date, note, distance) {
         let today;
         let localTime = new Date().toLocaleTimeString("en-US");
 
@@ -163,7 +162,7 @@ class Account{
             '${localTime}',
             '${note}',
             '${distance}'
-        )`, (err2, results) => {
+        )`, async (err2, results) => {
             if (err2) {
                 console.log(`Error inserting cardio: ${err2}`);
                 throw err2;
@@ -178,12 +177,12 @@ class Account{
                 console.log(`${this.name} leveled up to ${this.level}`);
             }
             
-            this.writeStatsToDB();
-            if (callback) callback()
+            await this.writeStatsToDB();
+            return;
         });
     }
 
-    getBreakdown(date, callback) {
+    async getBreakdown(date) {
         let today;
         if (date) {
             today = date;
@@ -216,7 +215,7 @@ class Account{
                             AND date = '${today}'
                             GROUP BY movement;`;
 
-            pool.query(scoreQry, (scErr, avgs) => {
+            pool.query(scoreQry, async (scErr, avgs) => {
                 if (scErr) console.log(`Query Error getting averages for breakdown:\n${scErr}`);
                 if (avgs == null || avgs.length == 0) return;
 
@@ -226,25 +225,23 @@ class Account{
                 let lines = 0
                 let scoreStr = ""
                 for (const avg of avgs) {
-                    getRecentAverage(this, avg.movement, date, (recentAverage) => {
-                        const avgDiff = avg["AVG(settotal)"] - recentAverage;
-                        const sym = avgDiff > 0 ? "+" : "";
-                        
-                        scoreStr += `${avg.movement}: ${sym}${avgDiff.toFixed(1)}\n`
-                        lines++;
+                    const recentAverage = await getRecentAverage(this, avg.movement, date)
+                    const avgDiff = avg["AVG(settotal)"] - recentAverage;
+                    const sym = avgDiff > 0 ? "+" : "";
+                    
+                    scoreStr += `${avg.movement}: ${sym}${avgDiff.toFixed(1)}\n`
+                    lines++;
 
-                        // Callback with the breakdown string once we have all of the lines (silly man does not code async well)
-                        if (lines == avgs.length && callback) {
-                            breakdownStrs.push(scoreStr)
-                            callback(breakdownStrs);
-                        }
-                    })
+                    if (lines == avgs.length) {
+                        breakdownStrs.push(scoreStr)
+                        return breakdownStrs;
+                    }
                 }
             })
         });
     }
 
-    getCardio(date, callback) {
+    async getCardio(date) {
         let today;
         if (date) {
             today = date;
@@ -268,17 +265,17 @@ class Account{
                     cardioStr += `${cardioSet.movement} for ${cardioSet.cardiotime} minutes and ${cardioSet.distance} miles\n- ${cardioSet.note}\n`;
             }
 
-            if (callback) callback(cardioStr);
+            return cardioStr;
         })
     }
 
-    skipDay(){
+    async skipDay(){
         this.skipTotal++;
         this.skipStreak++;
-        this.writeStatsToDB();
+        await this.writeStatsToDB();
     }
 
-    undoSet(sets, callback){
+    async undoSet(sets){
 
         let removeSets = sets || 1;
         if(removeSets <= 0) removeSets = 1;
@@ -286,8 +283,7 @@ class Account{
         pool.query(`SELECT * FROM lifts WHERE userID = '${this.id}' ORDER BY dateval DESC, setid DESC;`, (err, results) => {
             if (err) console.log(`Query error undoing set: ${err}`);
             if (results.length == 0) {
-                if (callback) callback(false);
-                return;
+                return false;
             }
 
             removeSets = removeSets > results.length ? results.length : removeSets;
@@ -295,7 +291,7 @@ class Account{
             for (let i = 0; i < removeSets; i++) {
                 let set = results[i];
 
-                pool.query(`DELETE FROM lifts WHERE setid = ${set.setid};`, (err2, delResult) => {
+                pool.query(`DELETE FROM lifts WHERE setid = ${set.setid};`, async (err2, delResult) => {
                     if (err2) console.log(`Deletion error undoing set: ${err2}`);
 
                     this.xp -= Set.getXPAmount(set.movement, set.weight, set.reps, this.bodyweight);
@@ -305,14 +301,13 @@ class Account{
                         this.xp += this.level * 1500;
                     }
 
-                    this.writeStatsToDB();
+                    await this.writeStatsToDB();
                 });
             }
-            if (callback) callback(true);
         });
     }
 
-    getTotalDays(callback){
+    async getTotalDays(){
         pool.query(`SELECT DISTINCT date FROM lifts WHERE userID = '${this.id}' ORDER BY date;`, (err, allDates) => {
             if (allDates.length < 1) {
                 this.totalDays = 0;
@@ -320,7 +315,7 @@ class Account{
             }
 
             this.totalDays = allDates.length; // This method would always be called before this needs to be displayed
-            if (callback) callback(allDates.length);
+            return allDates.length;
         });
     }
 
@@ -328,25 +323,25 @@ class Account{
         return this.squat + this.bench + this.deadlift;
     }
 
-    setBodyweight(newBodyweight){
+    async setBodyweight(newBodyweight){
         this.bodyweight = newBodyweight;
-        this.writeStatsToDB();
+        await this.writeStatsToDB();
     }
-    setRestDays(newRestDays){
+    async setRestDays(newRestDays){
         this.restDays = newRestDays;
-        this.writeStatsToDB();
+        await this.writeStatsToDB();
     }
-    setSquat(newSquat){
+    async setSquat(newSquat){
         this.squat = newSquat;
-        this.writeStatsToDB();
+        await this.writeStatsToDB();
     }
-    setBench(newBench){
+    async setBench(newBench){
         this.bench = newBench;
-        this.writeStatsToDB();
+        await this.writeStatsToDB();
     }
-    setDeadlift(newDeadlift){
+    async setDeadlift(newDeadlift){
         this.deadlift = newDeadlift;
-        this.writeStatsToDB();
+        await this.writeStatsToDB();
     }
 }
 

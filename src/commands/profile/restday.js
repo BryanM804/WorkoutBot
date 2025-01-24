@@ -42,7 +42,7 @@ module.exports = {
             ]
         }
     ],
-    callback: (client, interaction) => {
+    callback: async (client, interaction) => {
         const userAccount = findAccount(interaction.user.username, interaction.user.id);
         let currentDays = userAccount.restDays;
         let chosenDay = "";
@@ -75,7 +75,7 @@ module.exports = {
         for (let i = 0; i < currentDays.length; i++) {
             if (parseInt(currentDays[i]) == interaction.options.get("day").value) {
                 currentDays.splice(i,1)
-                userAccount.setRestDays(currentDays);
+                await userAccount.setRestDays(currentDays);
                 interaction.reply(`Removed ${chosenDay} from your rest days.`);
                 console.log(`${interaction.user.username} removed ${chosenDay} from rest days.`);
                 removed = true;
@@ -84,7 +84,7 @@ module.exports = {
         }
         if (!removed) {
             currentDays.push(interaction.options.get("day").value);
-            userAccount.setRestDays(currentDays);
+            await userAccount.setRestDays(currentDays);
             interaction.reply(`Added ${chosenDay} to your rest days.`);
             console.log(`${interaction.user.username} added ${chosenDay} to rest days.`);
         }
