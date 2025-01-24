@@ -2,9 +2,9 @@ const vega = require("vega");
 const { createPNGStream } = require("canvas");
 const fs = require("fs");
 
-module.exports = async (data, fileNum, type, timeframe) => {
+module.exports = async (data, fileNum, type, timeframe, callback) => {
     if (data.data.length < 2)
-        return false;
+        if (callback) callback(false)
 
     let title;
     switch (type) {
@@ -150,9 +150,7 @@ module.exports = async (data, fileNum, type, timeframe) => {
         stream.pipe(out);
         out.on("finish", () => { 
             console.log("Graph generated") ;
-            return true;
+            if (callback) callback(true);
         });
     });
-
-    return true;
 }

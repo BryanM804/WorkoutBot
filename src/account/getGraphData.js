@@ -41,45 +41,42 @@ module.exports = async (user, exercise, type, timeframe) => {
                 ORDER BY dateval ASC;`;
     }
 
-    pool.query(qry, (err, rawData) => {
-        if (err) console.log(`Querying error getting avgs: ${err}`);
-
-        if (rawData.length == 0) return;
-        
-        if (timeframe != "today") {
-            for (const p of rawData) {
-                // Adding each date to the array of points
-                let point = {
-                    "x": new Date(Date.parse(p.date)).toLocaleDateString(),
-                    "y": 0
-                }
-                
-                switch (type) {
-                    case "sets":
-                        point.y = p["AVG(settotal)"];
-                        break;
-                    case "strength":
-                        point.y = p["MAX(weight)"];
-                        break;
-                    case "best":
-                        point.y = p["MAX(settotal)"];
-                        break;
-                }
-
-                data.push(point);
+    const rawData = await pool.query(qry)
+    if (rawData.length == 0) return;
+    
+    if (timeframe != "today") {
+        for (const p of rawData) {
+            // Adding each date to the array of points
+            let point = {
+                "x": new Date(Date.parse(p.date)).toLocaleDateString(),
+                "y": 0
             }
-        } else {    
-            for (let i = 0; i < rawData.length; i++) {
-                // Adding each set as a point
-                let point = {
-                    "x": i + 1,
-                    "y": rawData[i].settotal
-                }
-
-                data.push(point);
+            
+            switch (type) {
+                case "sets":
+                    point.y = p["AVG(settotal)"];
+                    break;
+                case "strength":
+                    point.y = p["MAX(weight)"];
+                    break;
+                case "best":
+                    point.y = p["MAX(settotal)"];
+                    break;
             }
+
+            data.push(point);
         }
+    } else {    
+        for (let i = 0; i < rawData.length; i++) {
+            // Adding each set as a point
+            let point = {
+                "x": i + 1,
+                "y": rawData[i].settotal
+            }
 
-        return data;
-    });
+            data.push(point);
+        }
+    }
+
+    return data;
 }

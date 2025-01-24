@@ -19,9 +19,6 @@ module.exports = async (user, movement, date=null) => {
                 AND userID = '${user.id}'
                 AND dateval >= ${lowestDateVal};`
 
-    pool.query(qry, (err, results) => {
-        if (err) console.log(`Query Error fetching recent average: ${err}`);
-
-        return results[0]["AVG(settotal)"];
-    })
+    const results = await pool.query(qry)
+    return results[0]["AVG(settotal)"];
 }

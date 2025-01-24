@@ -101,5 +101,4 @@ module.exports = {
             interaction.editReply({components: []});
         }, 895000);
     }
-                
 }

@@ -21,58 +21,57 @@ eventHandler(client);
 // Creating account objects for each user file when the bot starts
 let accounts = [];
 let exerciseList = [];
-pool.query(`SELECT movement FROM exercises`, (err2, movements) => {
-    if (err2) console.log(`Error fetching exercise list: ${err2}`);
-    
+async function loadMovements() {
+    const movements = await pool.query("SELECT movement FROM exercises");    
     for (const movement of movements) {
         exerciseList.push(movement.movement);
     }
-});
+}
+loadMovements();
 
 // In large scale it would be very inefficient to have every account loaded to memory.
 // However in its current state this project is meant to be a private bot for my friends only.
-pool.query(`SELECT * FROM accounts`, (err2, result) => {
-    if (err2) console.error(err2);
+async function loadAccounts() {
+    const result = await pool.query(`SELECT * FROM accounts`)
     for (const acc of result) {
         accounts.push(new Account(acc.name, acc.id));
     }
-});
+}
+loadAccounts();
 
 //Checking if Users skipped a day
-function checkSkips(){
+async function checkSkips(){
     if (!(new Date().getHours() >= 23)) return;
     for (let i = 0; i < accounts.length; i++) {
         if (accounts[i].currentSetNumber < 2) continue;
 
-        pool.query(`SELECT date FROM lifts WHERE userID = '${accounts[i].id}' ORDER BY dateval DESC, setid DESC;`, (err2, lastSet) => {
-            if (err2) console.log(`Query error checking skips: ${err2}`);
-            if (!lastSet[0]) return;
+        const lastSet = await pool.query(`SELECT date FROM lifts WHERE userID = '${accounts[i].id}' ORDER BY dateval DESC, setid DESC;`)
+        if (!lastSet[0]) return;
 
-            const lastDate = new Date(lastSet[0].date);
-            let daysSkipped = 0;
-            let tempDate = new Date(Date.parse(new Date().toDateString())); // removes ms from date
+        const lastDate = new Date(lastSet[0].date);
+        let daysSkipped = 0;
+        let tempDate = new Date(Date.parse(new Date().toDateString())); // removes ms from date
 
-            while (parseInt((tempDate.getTime() - lastDate.getTime()) / 86400000) != 0) {
-                restDay = false;
-    
-                for (let j = 0; j < accounts[i].restDays.length; j++) {
-                    if(tempDate.getDay() == accounts[i].restDays[j]){
-                        restDay = true;
-                    }
-                }
-    
-                tempDate.setTime(tempDate.getTime() - 86400000);
-    
-                if(!restDay) daysSkipped++;
-            }
-    
-            if (daysSkipped > 0) {
-                while (accounts[i].skipStreak < daysSkipped) {
-                    console.log(`${accounts[i].name} Skipped.`)
-                    accounts[i].skipDay();
+        while (parseInt((tempDate.getTime() - lastDate.getTime()) / 86400000) != 0) {
+            restDay = false;
+
+            for (let j = 0; j < accounts[i].restDays.length; j++) {
+                if(tempDate.getDay() == accounts[i].restDays[j]){
+                    restDay = true;
                 }
             }
-        });
+
+            tempDate.setTime(tempDate.getTime() - 86400000);
+
+            if(!restDay) daysSkipped++;
+        }
+
+        if (daysSkipped > 0) {
+            while (accounts[i].skipStreak < daysSkipped) {
+                console.log(`${accounts[i].name} Skipped.`)
+                accounts[i].skipDay();
+            }
+        }
     }
 }
 
@@ -177,8 +176,6 @@ const sortAccounts = async function(sortby) {
 
 try {
     client.on("ready", (c) => {
-        setInterval(checkSkips, 900000);//Checks every 15 minutes
-        checkSkips();
         clearGraphs();
     });
 } catch (interactionError) {

@@ -13,7 +13,7 @@ module.exports = {
             required: true
         }
     ],
-    callback: (client, interaction) => {
+    callback: async (client, interaction) => {
         // This needs a fix for when a user makes a label with an apostrophe
 
         const userAccount = findAccount(interaction.user.username, interaction.user.id);
@@ -21,19 +21,13 @@ module.exports = {
 
         let today = new Date().toDateString();
 
-        pool.query(`INSERT INTO labels (userID, label, date) VALUES (
+        const result = await pool.query(`INSERT INTO labels (userID, label, date) VALUES (
             '${userAccount.id}',
             '${newLabel}',
             '${today}'
-        )`, (err2, result) => {
-            if (err2) {
-                console.log(`Query error setting label: ${err2}`);
-                interaction.reply(`Error setting label.`);
-                return;
-            }
+        )`)
 
-            interaction.reply(`Set today's label to: ${newLabel}`);
-            console.log(`${interaction.user.username} set today's label to \"${newLabel}\"`);
-        })
+        interaction.reply(`Set today's label to: ${newLabel}`);
+        console.log(`${interaction.user.username} set today's label to \"${newLabel}\"`);
     }
 }

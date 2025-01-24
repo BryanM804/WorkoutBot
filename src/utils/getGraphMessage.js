@@ -52,15 +52,17 @@ module.exports = async (userAccount, movement, type, timeframe) => {
         const recentAvg = await getRecentAverage(userAccount, movement, null);
         dataOb["baseline"] = recentAvg;
 
-        const success = await generateGraph(dataOb, fileNum, type, timeframe)
-        return await sendGraph(userAccount, fileNum, movement, graphEmbed, success);
+        generateGraph(dataOb, fileNum, type, timeframe, (success) => {
+            return sendGraph(userAccount, fileNum, movement, graphEmbed, success);
+        });
     } else {
-        const success = await generateGraph(dataOb, fileNum, type, timeframe);
-        return await sendGraph(userAccount, fileNum, movement, graphEmbed, success);
+        generateGraph(dataOb, fileNum, type, timeframe, (success) => {
+            return sendGraph(userAccount, fileNum, movement, graphEmbed, success);
+        });
     }
 }
 
-async function sendGraph(userAccount, fileNum, movement, graphEmbed, success) {
+function sendGraph(userAccount, fileNum, movement, graphEmbed, success) {
     if (success) {
         const graph = new AttachmentBuilder("./src/graphs/graph" + fileNum + ".png");
 
