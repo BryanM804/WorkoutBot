@@ -1,11 +1,10 @@
-const { ApplicationCommandOptionType } = require("discord.js");
+const { ApplicationCommandOptionType, EmbedBuilder } = require("discord.js");
 const { findAccount } = require("../../index.js");
 const getAverageTimeSets = require("../../utils/getAverageTimeSets.js");
-const getRecentAverage = require("../../utils/getRecentAverage.js");
 
 module.exports = {
-    name: "recap",
-    description: "See a recap of your workout for the day or [date] specified.",
+    name: "summary",
+    description: "See a summary of your workout for the day or [date] specified.",
     options: [
         {
             name: "date",
@@ -21,21 +20,25 @@ module.exports = {
         }
 
         getAverageTimeSets(account, date, (average) => {
+            const embed = new EmbedBuilder()
+                .setTitle(date);
+
             let avgTimeStr = `Average time between sets: ${Math.floor(average / 60)} minutes`;
             if (average % 60 != 0) {
                 avgTimeStr += ` ${average % 60} seconds`
             }
-            avgTimeStr += "\n";
+            embed.setFooter({text: avgTimeStr});
 
             account.getBreakdown(date, (breakdown) => {
                 account.getCardio(date, (cardio) => {
-                    let outStr = avgTimeStr + breakdown;
+                    embed.addFields({name: "Muscle Groups", value: breakdown[0]})
+                    embed.addFields({name: "Scores", value: breakdown[1]})
 
                     if (cardio != '') {
-                        outStr += `Cardio: ${cardio}`;
+                        embed.addFields({name: "Cardio:", value: cardio})
                     }
 
-                    interaction.reply(outStr);
+                    interaction.reply({embeds: [embed]});
                 })
             })
         })

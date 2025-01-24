@@ -202,11 +202,13 @@ class Account{
             if (err) console.log(`Query error getting breakdown:\n${err}`);
             if (res == null || res.length == 0) return;
 
-            let breakdownStr = "";
+            let breakdownStrs = [];
+            let groupStr = ""
 
             for (const group of res) {
-                breakdownStr += `${group.mgroup}: ${group["COUNT(*)"]} sets\n`;
+                groupStr += `${group.mgroup}: ${group["COUNT(*)"]} sets\n`;
             }
+            breakdownStrs.push(groupStr);
 
             const scoreQry = `SELECT movement, AVG(settotal)
                             FROM lifts
@@ -219,20 +221,23 @@ class Account{
                 if (avgs == null || avgs.length == 0) return;
 
                 const finalMov = avgs[avgs.length - 1].movement;
-                breakdownStr += "\nScores:\n";
 
                 // Scores are the difference between today's average and their recent average of the past 30 days
                 let lines = 0
+                let scoreStr = ""
                 for (const avg of avgs) {
                     getRecentAverage(this, avg.movement, date, (recentAverage) => {
                         const avgDiff = avg["AVG(settotal)"] - recentAverage;
                         const sym = avgDiff > 0 ? "+" : "";
                         
-                        breakdownStr += `${avg.movement}: ${sym}${avgDiff.toFixed(1)}\n`
+                        scoreStr += `${avg.movement}: ${sym}${avgDiff.toFixed(1)}\n`
                         lines++;
 
                         // Callback with the breakdown string once we have all of the lines (silly man does not code async well)
-                        if (lines == avgs.length && callback) callback(breakdownStr);
+                        if (lines == avgs.length && callback) {
+                            breakdownStrs.push(scoreStr)
+                            callback(breakdownStrs);
+                        }
                     })
                 }
             })

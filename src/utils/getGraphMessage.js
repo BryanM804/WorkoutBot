@@ -48,39 +48,33 @@ module.exports = (userAccount, movement, type, timeframe, callback) => {
         const graphEmbed = new EmbedBuilder()
             .setTitle(`${userAccount.name}'s ${adj}${timeAdj}${movement}`);
 
-        // Unfortunate giant duplicated code
         if (timeframe == "today") {
             getRecentAverage(userAccount, movement, null, (recentAvg) => {
                 dataOb["baseline"] = recentAvg;
 
-                generateGraph(dataOb, fileNum, type, timeframe, (result) => {
-                    if (!result) {
-                        interaction.reply({ content: "Not enough data for " + movement, ephemeral: true });
-                        console.log(`${userAccount.name} tried to graph history for ${movement} but doesn't have enough data.`);
-                    } else {
-                        const graph = new AttachmentBuilder("./src/graphs/graph" + fileNum + ".png");
-                               
-                        graphEmbed.setImage("attachment://graph" + fileNum + ".png");
-    
-                        console.log(`${userAccount.name} graphed history of their ${movement}.`)
-                        if (callback) callback({ embeds: [graphEmbed], files: [graph] })
-                    }
+                generateGraph(dataOb, fileNum, type, timeframe, (success) => {
+                    sendGraph(userAccount, fileNum, movement, graphEmbed, callback, success);
                 });
             })
         } else {
-            generateGraph(dataOb, fileNum, type, timeframe, (result) => {
-                if (!result) {
-                    interaction.reply({ content: "Not enough data for " + movement, ephemeral: true });
-                    console.log(`${userAccount.name} tried to graph history for ${movement} but doesn't have enough data.`);
-                } else {
-                    const graph = new AttachmentBuilder("./src/graphs/graph" + fileNum + ".png");
-
-                    graphEmbed.setImage("attachment://graph" + fileNum + ".png");
-
-                    console.log(`${userAccount.name} graphed history of their ${movement}.`)
-                    if (callback) callback({ embeds: [graphEmbed], files: [graph] });
-                }
+            generateGraph(dataOb, fileNum, type, timeframe, (success) => {
+                sendGraph(userAccount, fileNum, movement, graphEmbed, callback, success);
             });
         }
     });
+}
+
+function sendGraph(userAccount, fileNum, movement, graphEmbed, callback, success) {
+    if (success) {
+        const graph = new AttachmentBuilder("./src/graphs/graph" + fileNum + ".png");
+
+        graphEmbed.setImage("attachment://graph" + fileNum + ".png");
+
+        console.log(`${userAccount.name} graphed history of their ${movement}.`)
+        if (callback) callback({ embeds: [graphEmbed], files: [graph] });
+    } else {
+        console.log(`${userAccount.name} tried to graph history for ${movement} but doesn't have enough data.`);
+        graphEmbed.addFields({name: "Not enough data for " + movement, value: "Graph needs at least 2 points of data."})
+        if (callback) callback({ embeds: [graphEmbed], files: [] });
+    }
 }
